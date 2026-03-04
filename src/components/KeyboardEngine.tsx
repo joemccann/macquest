@@ -1,0 +1,319 @@
+"use client";
+
+import { useReducer, useCallback, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { gameReducer, getInitialState } from "@/lib/game-state";
+import { useMacShield } from "@/hooks/useMacShield";
+import { useGameKeyboard } from "@/hooks/useGameKeyboard";
+import { useSpeech } from "@/hooks/useSpeech";
+import { StarshipKeyboard } from "./StarshipKeyboard";
+import { ParticleExplosion } from "./ParticleExplosion";
+import { WelcomeScreen } from "./WelcomeScreen";
+import { SpaceBackground } from "./SpaceBackground";
+import { generatePhrase } from "@/app/actions/generate-phrase";
+import { getRandomWrongPhrase } from "@/lib/phrases";
+
+const LEVEL_NAMES = [
+  "Magic Buttons",
+  "Home Row Fingers",
+  "Full Home Row",
+  "Home Row Master",
+];
+
+export function KeyboardEngine() {
+  const [state, dispatch] = useReducer(gameReducer, undefined, getInitialState);
+  const [pressedKey, setPressedKey] = useState<string | null>(null);
+  const [explosionId, setExplosionId] = useState(0);
+  const celebrationTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const wrongTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const { speak } = useSpeech();
+
+  useMacShield();
+
+  const handleCorrect = useCallback(() => {
+    setPressedKey(state.targetLetter);
+    setExplosionId((prev) => prev + 1);
+    dispatch({ type: "CORRECT_KEY" });
+
+    generatePhrase().then((message) => {
+      dispatch({ type: "SET_CELEBRATION_MESSAGE", message });
+      speak(message);
+    });
+
+    celebrationTimer.current = setTimeout(() => {
+      setPressedKey(null);
+      dispatch({ type: "FINISH_CELEBRATION" });
+    }, 2500);
+  }, [state.targetLetter, speak]);
+
+  const handleWrong = useCallback(() => {
+    // Clear any previous wrong-key timeout so they don't stack
+    if (wrongTimer.current) clearTimeout(wrongTimer.current);
+
+    const message = getRandomWrongPhrase();
+    dispatch({ type: "WRONG_KEY", message });
+    speak(message);
+    wrongTimer.current = setTimeout(() => dispatch({ type: "CLEAR_WRONG" }), 2500);
+  }, [speak]);
+
+  useGameKeyboard({
+    targetLetter: state.targetLetter,
+    enabled: state.phase === "playing",
+    onCorrect: handleCorrect,
+    onWrong: handleWrong,
+  });
+
+  const handleStart = useCallback(() => {
+    dispatch({ type: "START_GAME" });
+  }, []);
+
+  const handleNextLevel = useCallback(() => {
+    dispatch({ type: "NEXT_LEVEL" });
+  }, []);
+
+  const progress =
+    state.totalLetters > 0
+      ? (state.currentLetterIndex / state.totalLetters) * 100
+      : 0;
+
+  if (state.phase === "welcome") {
+    return (
+      <>
+        <SpaceBackground />
+        <WelcomeScreen onStart={handleStart} />
+      </>
+    );
+  }
+
+  if (state.phase === "level-complete") {
+    return (
+      <>
+        <SpaceBackground />
+        <div className="flex flex-col items-center justify-center min-h-screen gap-8 px-4 relative z-10">
+          {/* Celebration emoji */}
+          <motion.div
+            className="text-8xl"
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 10 }}
+          >
+            🎉
+          </motion.div>
+
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
+            className="text-center"
+          >
+            <h2
+              className="text-5xl md:text-7xl font-bold mb-3"
+              style={{
+                background: "linear-gradient(135deg, #fbbf24 0%, #f97316 30%, #ec4899 60%, #c084fc 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                filter: "drop-shadow(0 4px 16px rgba(251, 191, 36, 0.3))",
+              }}
+            >
+              Level Complete!
+            </h2>
+            <p className="text-xl text-white/50 font-medium">
+              You typed {state.letters.length} letters perfectly!
+            </p>
+          </motion.div>
+
+          <motion.button
+            onClick={handleNextLevel}
+            className="relative group cursor-pointer"
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
+          >
+            <div
+              className="absolute -inset-2 rounded-full opacity-50 group-hover:opacity-70 transition-opacity"
+              style={{
+                background: "linear-gradient(135deg, #34d399, #3b82f6)",
+                filter: "blur(14px)",
+              }}
+            />
+            <div
+              className="relative px-14 py-5 rounded-full text-2xl font-bold text-white"
+              style={{
+                background: "linear-gradient(135deg, #10b981 0%, #3b82f6 100%)",
+                boxShadow: "0 4px 24px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.15)",
+              }}
+            >
+              Next Level →
+            </div>
+          </motion.button>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <SpaceBackground />
+      <div className="relative flex flex-col items-center justify-center min-h-screen gap-5 px-4 py-6 z-10">
+        {/* Header bar */}
+        <div className="w-full max-w-2xl">
+          <div className="glass-panel px-5 py-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🚀</span>
+                <span className="text-sm font-medium text-white/50">
+                  Level {state.currentLevel + 1}
+                </span>
+                <span className="text-xs text-white/25 font-medium">
+                  · {LEVEL_NAMES[state.currentLevel] ?? "Challenge"}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-bold text-white/70">
+                  {state.currentLetterIndex}
+                </span>
+                <span className="text-xs text-white/30">/</span>
+                <span className="text-sm text-white/40">
+                  {state.totalLetters}
+                </span>
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-white/5">
+              <motion.div
+                className="h-full rounded-full"
+                style={{
+                  background: "linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6, #34d399)",
+                  backgroundSize: "200% 100%",
+                  boxShadow: "0 0 12px rgba(139, 92, 246, 0.4)",
+                }}
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              />
+              {/* Shimmer overlay */}
+              <div
+                className="absolute inset-0 rounded-full opacity-30"
+                style={{
+                  background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)",
+                  backgroundSize: "200% 100%",
+                  animation: "shimmer 3s linear infinite",
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Target letter display */}
+        <div className="relative flex items-center justify-center" style={{ minHeight: 200 }}>
+          <motion.div
+            key={state.targetLetter + state.currentLetterIndex}
+            className="letter-halo"
+            initial={{ scale: 0.3, opacity: 0 }}
+            animate={
+              state.wrongKey
+                ? { scale: 1, opacity: 1, x: [0, -12, 12, -12, 12, 0] }
+                : { scale: 1, opacity: 1, x: 0 }
+            }
+            transition={
+              state.wrongKey
+                ? { duration: 0.4, ease: "easeInOut" }
+                : { type: "spring", stiffness: 250, damping: 15 }
+            }
+          >
+            <div
+              className="text-[140px] md:text-[180px] font-bold leading-none select-none text-center"
+              style={{
+                background: "linear-gradient(135deg, #fce7f3 0%, #e9d5ff 30%, #c7d2fe 50%, #bae6fd 75%, #d1fae5 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                filter: "drop-shadow(0 0 30px rgba(139, 92, 246, 0.5)) drop-shadow(0 4px 8px rgba(0,0,0,0.3))",
+              }}
+            >
+              {state.targetLetter}
+            </div>
+          </motion.div>
+
+          <ParticleExplosion
+            active={state.phase === "celebrating"}
+            id={explosionId}
+          />
+        </div>
+
+        {/* Message area */}
+        <div style={{ minHeight: 48 }} className="relative flex items-center justify-center">
+          {/* Celebration message */}
+          <AnimatePresence>
+            {state.phase === "celebrating" && state.celebrationMessage && (
+              <motion.div
+                key="celebration"
+                className="glass-panel px-6 py-3 absolute"
+                initial={{ y: 20, opacity: 0, scale: 0.9 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: -15, opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3 }}
+              >
+                <p
+                  className="text-xl md:text-2xl font-semibold text-center whitespace-nowrap"
+                  style={{
+                    background: "linear-gradient(135deg, #fbbf24, #f97316, #ec4899)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
+                >
+                  {state.celebrationMessage}
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Wrong-key message */}
+          <AnimatePresence>
+            {state.wrongKey && state.wrongKeyMessage && (
+              <motion.div
+                key="wrong"
+                className="glass-panel px-6 py-3 absolute"
+                style={{ borderColor: "rgba(251, 146, 60, 0.25)" }}
+                initial={{ y: 10, opacity: 0, scale: 0.95 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: -10, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <p className="text-lg md:text-xl font-semibold text-center text-orange-300/90 whitespace-nowrap">
+                  {state.wrongKeyMessage}
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Hint text (only when playing and no other message) */}
+          {state.phase === "playing" && !state.wrongKey && !state.celebrationMessage && (
+            <p className="text-base text-white/30 font-medium text-center">
+              Press the{" "}
+              <span
+                className="font-bold"
+                style={{
+                  background: "linear-gradient(135deg, #c084fc, #60a5fa)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                {state.targetLetter}
+              </span>{" "}
+              key!
+            </p>
+          )}
+        </div>
+
+        {/* Keyboard */}
+        <StarshipKeyboard
+          targetLetter={state.targetLetter}
+          pressedKey={state.phase === "celebrating" ? pressedKey : null}
+        />
+      </div>
+    </>
+  );
+}
