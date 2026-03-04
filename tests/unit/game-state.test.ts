@@ -432,35 +432,13 @@ describe("gameReducer", () => {
       expect(state.wrongKey).toBe(false);
     });
 
-    it("wraps back to level 0 with shuffled letters when all levels complete", () => {
+    it("transitions to victory when all levels complete", () => {
       const state = gameReducer(
-        createPlayingState({ phase: "level-complete", currentLevel: 11 }),
+        createPlayingState({ phase: "level-complete", currentLevel: 11, score: 5000 }),
         { type: "NEXT_LEVEL" }
       );
-      expect(state.phase).toBe("playing");
-      expect(state.currentLevel).toBe(0);
-      expect(state.currentLetterIndex).toBe(0);
-      // Should have same length as level 0 but potentially shuffled
-      expect(state.letters.length).toBe(8);
-      // Should contain same letters as level 0 (F and J)
-      const sorted = [...state.letters].sort();
-      expect(sorted).toEqual(["F", "F", "F", "J", "J", "J", "J", "F"].sort());
-    });
-
-    it("sets targetLetter to first of shuffled letters on wrap", () => {
-      const state = gameReducer(
-        createPlayingState({ phase: "level-complete", currentLevel: 11 }),
-        { type: "NEXT_LEVEL" }
-      );
-      expect(state.targetLetter).toBe(state.letters[0]);
-    });
-
-    it("sets totalLetters correctly on wrap", () => {
-      const state = gameReducer(
-        createPlayingState({ phase: "level-complete", currentLevel: 11 }),
-        { type: "NEXT_LEVEL" }
-      );
-      expect(state.totalLetters).toBe(state.letters.length);
+      expect(state.phase).toBe("victory");
+      expect(state.score).toBe(5000);
     });
   });
 

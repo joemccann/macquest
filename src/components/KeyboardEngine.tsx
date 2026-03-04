@@ -29,7 +29,9 @@ export function KeyboardEngine() {
   // Save progress on level-complete and next-level
   const { phase, currentLevel, currentLetterIndex, score, perfectLevels, wrongCountThisLevel } = state;
   useEffect(() => {
-    if (phase === "level-complete" || phase === "playing") {
+    if (phase === "victory") {
+      clearProgress();
+    } else if (phase === "level-complete" || phase === "playing") {
       if (score > 0 || currentLevel > 0 || currentLetterIndex > 0) {
         saveProgress({ currentLevel, currentLetterIndex, score, perfectLevels, wrongCountThisLevel });
       }
@@ -100,6 +102,100 @@ export function KeyboardEngine() {
           savedLevel={savedGame ? savedGame.currentLevel + 1 : undefined}
           savedScore={savedGame?.score}
         />
+      </>
+    );
+  }
+
+  if (state.phase === "victory") {
+    return (
+      <>
+        <SpaceBackground />
+        <div className="flex flex-col items-center justify-center min-h-screen gap-8 px-4 relative z-10">
+          <motion.div
+            className="text-8xl"
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 10 }}
+          >
+            🏆
+          </motion.div>
+
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
+            className="text-center"
+          >
+            <h2
+              className="text-5xl md:text-7xl font-bold mb-3"
+              style={{
+                background: "linear-gradient(135deg, #fbbf24 0%, #f97316 30%, #ec4899 60%, #c084fc 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                filter: "drop-shadow(0 4px 16px rgba(251, 191, 36, 0.3))",
+              }}
+            >
+              You Won!
+            </h2>
+            <p className="text-xl text-white/50 font-medium">
+              You mastered the entire keyboard!
+            </p>
+          </motion.div>
+
+          <motion.div
+            className="glass-panel px-10 py-6 text-center"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
+          >
+            <p className="text-sm text-white/40 mb-1">Final Score</p>
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-3xl">⭐</span>
+              <span
+                className="text-5xl font-bold"
+                style={{
+                  background: "linear-gradient(135deg, #fbbf24, #f97316)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                {state.score.toLocaleString()}
+              </span>
+            </div>
+            {state.perfectLevels.length > 0 && (
+              <p className="text-sm text-white/40 mt-3">
+                {state.perfectLevels.length} perfect level{state.perfectLevels.length !== 1 ? "s" : ""}!
+              </p>
+            )}
+          </motion.div>
+
+          <motion.button
+            onClick={handleStart}
+            className="relative group cursor-pointer"
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
+          >
+            <div
+              className="absolute -inset-2 rounded-full opacity-50 group-hover:opacity-70 transition-opacity"
+              style={{
+                background: "linear-gradient(135deg, #f472b6, #c084fc, #38bdf8)",
+                filter: "blur(14px)",
+              }}
+            />
+            <div
+              className="relative px-14 py-5 rounded-full text-2xl font-bold text-white"
+              style={{
+                background: "linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #3b82f6 100%)",
+                boxShadow: "0 4px 24px rgba(139, 92, 246, 0.4), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.15)",
+              }}
+            >
+              Play Again
+            </div>
+          </motion.button>
+        </div>
       </>
     );
   }

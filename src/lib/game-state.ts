@@ -1,6 +1,6 @@
 import type { SaveState } from "./save-state";
 
-export type GamePhase = "welcome" | "playing" | "celebrating" | "level-complete";
+export type GamePhase = "welcome" | "playing" | "celebrating" | "level-complete" | "victory";
 
 export interface GameState {
   phase: GamePhase;
@@ -218,20 +218,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case "NEXT_LEVEL": {
       const nextLevel = state.currentLevel + 1;
       if (nextLevel >= LEVELS.length) {
-        // Wrap around to level 0 with shuffled letters
-        const letters = [...LEVELS[0]].sort(() => Math.random() - 0.5);
         return {
           ...state,
-          phase: "playing",
-          currentLevel: 0,
-          currentLetterIndex: 0,
-          targetLetter: letters[0],
-          letters,
-          totalLetters: letters.length,
-          celebrationMessage: "",
-          wrongKey: false,
-          wrongCountThisLevel: 0,
-          bonusAwarded: 0,
+          phase: "victory",
         };
       }
 

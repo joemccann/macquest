@@ -112,7 +112,7 @@ describe("game-state", () => {
       expect(state.totalLetters).toBe(10);
     });
 
-    it("handles NEXT_LEVEL - wraps around after last level", () => {
+    it("handles NEXT_LEVEL - shows victory after last level", () => {
       let state = gameReducer(initialState, { type: "START_GAME" });
 
       // Complete all 12 levels
@@ -125,10 +125,9 @@ describe("game-state", () => {
         state = gameReducer(state, { type: "NEXT_LEVEL" });
       }
 
-      // After completing all levels and pressing next, should wrap to level 0
-      expect(state.phase).toBe("playing");
-      expect(state.currentLevel).toBe(0);
-      expect(state.currentLetterIndex).toBe(0);
+      // After completing all levels, should show victory
+      expect(state.phase).toBe("victory");
+      expect(state.score).toBeGreaterThan(0);
     });
 
     it("returns same state for unknown action", () => {
