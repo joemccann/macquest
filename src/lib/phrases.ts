@@ -26,9 +26,14 @@ const WRONG_KEY_PHRASES = [
   "That's okay! Look for the colorful key!",
 ];
 
+export interface PhraseResult {
+  text: string;
+  audioFile: string;
+}
+
 const history: number[] = [];
 
-export function getRandomWrongPhrase(): string {
+export function getRandomWrongPhrase(): PhraseResult {
   const maxHistory = 10;
   const available = WRONG_KEY_PHRASES
     .map((_, i) => i)
@@ -40,5 +45,8 @@ export function getRandomWrongPhrase(): string {
   history.push(idx);
   if (history.length > maxHistory) history.shift();
 
-  return WRONG_KEY_PHRASES[idx];
+  return {
+    text: WRONG_KEY_PHRASES[idx],
+    audioFile: `/audio/wrong/${String(idx).padStart(2, "0")}.mp3`,
+  };
 }

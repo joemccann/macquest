@@ -43,9 +43,14 @@ const POSITIVE_PHRASES = [
   "Your keyboard loves you!",
 ];
 
+export interface PhraseResult {
+  text: string;
+  audioFile?: string;
+}
+
 const positiveHistory: number[] = [];
 
-function pickRandom(phrases: string[], history: number[]): string {
+function pickRandom(phrases: string[], history: number[]): { text: string; index: number } {
   const maxHistory = Math.min(Math.floor(phrases.length / 2), 12);
   const available = phrases
     .map((_, i) => i)
@@ -57,10 +62,10 @@ function pickRandom(phrases: string[], history: number[]): string {
   history.push(idx);
   if (history.length > maxHistory) history.shift();
 
-  return phrases[idx];
+  return { text: phrases[idx], index: idx };
 }
 
-export async function generatePhrase(): Promise<string> {
+export async function generatePhrase(): Promise<PhraseResult> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 1500);
@@ -74,8 +79,22 @@ export async function generatePhrase(): Promise<string> {
     });
 
     clearTimeout(timeout);
-    return text.trim() || pickRandom(POSITIVE_PHRASES, positiveHistory);
+    const trimmed = text.trim();
+    if (trimmed) {
+      // AI-generated phrase — no pre-recorded audio, will use speech synthesis fallback
+      return { text: trimmed };
+    }
+
+    const result = pickRandom(POSITIVE_PHRASES, positiveHistory);
+    return {
+      text: result.text,
+      audioFile: `/audio/positive/${String(result.index).padStart(2, "0")}.mp3`,
+    };
   } catch {
-    return pickRandom(POSITIVE_PHRASES, positiveHistory);
+    const result = pickRandom(POSITIVE_PHRASES, positiveHistory);
+    return {
+      text: result.text,
+      audioFile: `/audio/positive/${String(result.index).padStart(2, "0")}.mp3`,
+    };
   }
 }

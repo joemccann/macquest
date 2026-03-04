@@ -35,9 +35,9 @@ export function KeyboardEngine() {
     setExplosionId((prev) => prev + 1);
     dispatch({ type: "CORRECT_KEY" });
 
-    generatePhrase().then((message) => {
-      dispatch({ type: "SET_CELEBRATION_MESSAGE", message });
-      speak(message);
+    generatePhrase().then((result) => {
+      dispatch({ type: "SET_CELEBRATION_MESSAGE", message: result.text });
+      speak(result.text, result.audioFile);
     });
 
     celebrationTimer.current = setTimeout(() => {
@@ -50,9 +50,9 @@ export function KeyboardEngine() {
     // Clear any previous wrong-key timeout so they don't stack
     if (wrongTimer.current) clearTimeout(wrongTimer.current);
 
-    const message = getRandomWrongPhrase();
-    dispatch({ type: "WRONG_KEY", message });
-    speak(message);
+    const result = getRandomWrongPhrase();
+    dispatch({ type: "WRONG_KEY", message: result.text });
+    speak(result.text, result.audioFile);
     wrongTimer.current = setTimeout(() => dispatch({ type: "CLEAR_WRONG" }), 2500);
   }, [speak]);
 
