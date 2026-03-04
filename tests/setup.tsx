@@ -68,8 +68,7 @@ vi.mock("framer-motion", async () => {
               variants: _variants,
               ...rest
             } = props;
-            const Tag = prop as keyof JSX.IntrinsicElements;
-            // @ts-expect-error - dynamic element creation
+            const Tag = prop as keyof React.JSX.IntrinsicElements;
             return <Tag {...rest} />;
           };
           Component.displayName = `motion.${prop}`;

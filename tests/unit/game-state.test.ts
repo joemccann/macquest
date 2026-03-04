@@ -71,6 +71,9 @@ describe("gameReducer", () => {
       celebrationMessage: "",
       wrongKey: false,
       wrongKeyMessage: "",
+      wrongCountThisLevel: 0,
+      perfectLevels: [],
+      bonusAwarded: 0,
       ...overrides,
     };
   }
@@ -146,11 +149,11 @@ describe("gameReducer", () => {
       expect(state.phase).toBe("celebrating");
     });
 
-    it("increments score by 1", () => {
-      const state = gameReducer(createPlayingState({ score: 3 }), {
+    it("increments score by 100", () => {
+      const state = gameReducer(createPlayingState({ score: 300 }), {
         type: "CORRECT_KEY",
       });
-      expect(state.score).toBe(4);
+      expect(state.score).toBe(400);
     });
 
     it("clears wrongKey flag", () => {
@@ -196,12 +199,28 @@ describe("gameReducer", () => {
       expect(state.phase).toBe("playing");
     });
 
-    it("does not change score", () => {
-      const state = gameReducer(createPlayingState({ score: 5 }), {
+    it("decrements score by 100", () => {
+      const state = gameReducer(createPlayingState({ score: 500 }), {
         type: "WRONG_KEY",
         message: "Nope!",
       });
-      expect(state.score).toBe(5);
+      expect(state.score).toBe(400);
+    });
+
+    it("does not let score go below 0", () => {
+      const state = gameReducer(createPlayingState({ score: 0 }), {
+        type: "WRONG_KEY",
+        message: "Nope!",
+      });
+      expect(state.score).toBe(0);
+    });
+
+    it("increments wrongCountThisLevel", () => {
+      const state = gameReducer(createPlayingState({ wrongCountThisLevel: 2 }), {
+        type: "WRONG_KEY",
+        message: "Nope!",
+      });
+      expect(state.wrongCountThisLevel).toBe(3);
     });
   });
 
@@ -375,16 +394,28 @@ describe("gameReducer", () => {
       expect(state.targetLetter).toBe("D"); // first letter of level 1
     });
 
-    it("resets score to 0", () => {
+    it("preserves score across levels", () => {
       const state = gameReducer(
         createPlayingState({
           phase: "level-complete",
           currentLevel: 0,
-          score: 8,
+          score: 800,
         }),
         { type: "NEXT_LEVEL" }
       );
-      expect(state.score).toBe(0);
+      expect(state.score).toBe(800);
+    });
+
+    it("resets wrongCountThisLevel to 0", () => {
+      const state = gameReducer(
+        createPlayingState({
+          phase: "level-complete",
+          currentLevel: 0,
+          wrongCountThisLevel: 3,
+        }),
+        { type: "NEXT_LEVEL" }
+      );
+      expect(state.wrongCountThisLevel).toBe(0);
     });
 
     it("clears celebration message and wrongKey", () => {
@@ -403,13 +434,12 @@ describe("gameReducer", () => {
 
     it("wraps back to level 0 with shuffled letters when all levels complete", () => {
       const state = gameReducer(
-        createPlayingState({ phase: "level-complete", currentLevel: 3 }),
+        createPlayingState({ phase: "level-complete", currentLevel: 11 }),
         { type: "NEXT_LEVEL" }
       );
       expect(state.phase).toBe("playing");
       expect(state.currentLevel).toBe(0);
       expect(state.currentLetterIndex).toBe(0);
-      expect(state.score).toBe(0);
       // Should have same length as level 0 but potentially shuffled
       expect(state.letters.length).toBe(8);
       // Should contain same letters as level 0 (F and J)
@@ -419,7 +449,7 @@ describe("gameReducer", () => {
 
     it("sets targetLetter to first of shuffled letters on wrap", () => {
       const state = gameReducer(
-        createPlayingState({ phase: "level-complete", currentLevel: 3 }),
+        createPlayingState({ phase: "level-complete", currentLevel: 11 }),
         { type: "NEXT_LEVEL" }
       );
       expect(state.targetLetter).toBe(state.letters[0]);
@@ -427,7 +457,7 @@ describe("gameReducer", () => {
 
     it("sets totalLetters correctly on wrap", () => {
       const state = gameReducer(
-        createPlayingState({ phase: "level-complete", currentLevel: 3 }),
+        createPlayingState({ phase: "level-complete", currentLevel: 11 }),
         { type: "NEXT_LEVEL" }
       );
       expect(state.totalLetters).toBe(state.letters.length);
@@ -458,7 +488,7 @@ describe("gameReducer", () => {
         // Correct key
         state = gameReducer(state, { type: "CORRECT_KEY" });
         expect(state.phase).toBe("celebrating");
-        expect(state.score).toBe(i + 1);
+        expect(state.score).toBe((i + 1) * 100);
 
         // Set celebration message
         state = gameReducer(state, {
@@ -489,7 +519,7 @@ describe("gameReducer", () => {
       });
       expect(state.wrongKey).toBe(true);
       expect(state.wrongKeyMessage).toBe("Oops!");
-      expect(state.score).toBe(0); // score unchanged
+      expect(state.score).toBe(0); // score stays at 0 (can't go negative)
 
       // Clear wrong
       state = gameReducer(state, { type: "CLEAR_WRONG" });
@@ -497,7 +527,7 @@ describe("gameReducer", () => {
 
       // Can still get correct key
       state = gameReducer(state, { type: "CORRECT_KEY" });
-      expect(state.score).toBe(1);
+      expect(state.score).toBe(100);
       expect(state.phase).toBe("celebrating");
     });
   });

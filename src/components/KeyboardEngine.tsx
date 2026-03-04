@@ -1,8 +1,10 @@
 "use client";
 
-import { useReducer, useCallback, useRef, useState } from "react";
+import { useReducer, useCallback, useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { gameReducer, getInitialState } from "@/lib/game-state";
+import { gameReducer, getInitialState, LEVEL_NAMES } from "@/lib/game-state";
+import { saveProgress, loadProgress, clearProgress } from "@/lib/save-state";
+import type { SaveState } from "@/lib/save-state";
 import { useMacShield } from "@/hooks/useMacShield";
 import { useGameKeyboard } from "@/hooks/useGameKeyboard";
 import { useSpeech } from "@/hooks/useSpeech";
@@ -13,22 +15,26 @@ import { SpaceBackground } from "./SpaceBackground";
 import { generatePhrase } from "@/app/actions/generate-phrase";
 import { getRandomWrongPhrase } from "@/lib/phrases";
 
-const LEVEL_NAMES = [
-  "Magic Buttons",
-  "Home Row Fingers",
-  "Full Home Row",
-  "Home Row Master",
-];
-
 export function KeyboardEngine() {
   const [state, dispatch] = useReducer(gameReducer, undefined, getInitialState);
   const [pressedKey, setPressedKey] = useState<string | null>(null);
   const [explosionId, setExplosionId] = useState(0);
+  const [savedGame, setSavedGame] = useState<SaveState | null>(() => loadProgress());
   const celebrationTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const wrongTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const { speak } = useSpeech();
 
   useMacShield();
+
+  // Save progress on level-complete and next-level
+  const { phase, currentLevel, currentLetterIndex, score, perfectLevels, wrongCountThisLevel } = state;
+  useEffect(() => {
+    if (phase === "level-complete" || phase === "playing") {
+      if (score > 0 || currentLevel > 0 || currentLetterIndex > 0) {
+        saveProgress({ currentLevel, currentLetterIndex, score, perfectLevels, wrongCountThisLevel });
+      }
+    }
+  }, [phase, currentLevel, currentLetterIndex, score, perfectLevels, wrongCountThisLevel]);
 
   const handleCorrect = useCallback(() => {
     setPressedKey(state.targetLetter);
@@ -47,7 +53,6 @@ export function KeyboardEngine() {
   }, [state.targetLetter, speak]);
 
   const handleWrong = useCallback(() => {
-    // Clear any previous wrong-key timeout so they don't stack
     if (wrongTimer.current) clearTimeout(wrongTimer.current);
 
     const result = getRandomWrongPhrase();
@@ -64,8 +69,17 @@ export function KeyboardEngine() {
   });
 
   const handleStart = useCallback(() => {
+    clearProgress();
+    setSavedGame(null);
     dispatch({ type: "START_GAME" });
   }, []);
+
+  const handleResume = useCallback(() => {
+    if (savedGame) {
+      dispatch({ type: "RESUME_GAME", save: savedGame });
+      setSavedGame(null);
+    }
+  }, [savedGame]);
 
   const handleNextLevel = useCallback(() => {
     dispatch({ type: "NEXT_LEVEL" });
@@ -80,12 +94,19 @@ export function KeyboardEngine() {
     return (
       <>
         <SpaceBackground />
-        <WelcomeScreen onStart={handleStart} />
+        <WelcomeScreen
+          onStart={handleStart}
+          onResume={savedGame ? handleResume : undefined}
+          savedLevel={savedGame ? savedGame.currentLevel + 1 : undefined}
+          savedScore={savedGame?.score}
+        />
       </>
     );
   }
 
   if (state.phase === "level-complete") {
+    const isPerfect = state.bonusAwarded > 0;
+
     return (
       <>
         <SpaceBackground />
@@ -97,7 +118,7 @@ export function KeyboardEngine() {
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 10 }}
           >
-            🎉
+            {isPerfect ? "🌟" : "🎉"}
           </motion.div>
 
           <motion.div
@@ -118,8 +139,45 @@ export function KeyboardEngine() {
               Level Complete!
             </h2>
             <p className="text-xl text-white/50 font-medium">
-              You typed {state.letters.length} letters perfectly!
+              You typed {state.letters.length} letters!
             </p>
+          </motion.div>
+
+          {/* Score summary */}
+          <motion.div
+            className="glass-panel px-8 py-5 text-center"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
+          >
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <span className="text-2xl">⭐</span>
+              <span
+                className="text-3xl font-bold"
+                style={{
+                  background: "linear-gradient(135deg, #fbbf24, #f97316)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                {state.score.toLocaleString()}
+              </span>
+            </div>
+            {isPerfect && (
+              <motion.p
+                className="text-lg font-semibold mt-2"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", delay: 0.6 }}
+                style={{
+                  background: "linear-gradient(135deg, #34d399, #38bdf8)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                PERFECT! Bonus: +{state.bonusAwarded.toLocaleString()}
+              </motion.p>
+            )}
           </motion.div>
 
           <motion.button
@@ -170,14 +228,24 @@ export function KeyboardEngine() {
                   · {LEVEL_NAMES[state.currentLevel] ?? "Challenge"}
                 </span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-bold text-white/70">
-                  {state.currentLetterIndex}
-                </span>
-                <span className="text-xs text-white/30">/</span>
-                <span className="text-sm text-white/40">
-                  {state.totalLetters}
-                </span>
+              <div className="flex items-center gap-3">
+                {/* Score */}
+                <div className="flex items-center gap-1">
+                  <span className="text-sm">⭐</span>
+                  <span className="text-sm font-bold text-amber-300/80">
+                    {state.score.toLocaleString()}
+                  </span>
+                </div>
+                {/* Progress counter */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-bold text-white/70">
+                    {state.currentLetterIndex}
+                  </span>
+                  <span className="text-xs text-white/30">/</span>
+                  <span className="text-sm text-white/40">
+                    {state.totalLetters}
+                  </span>
+                </div>
               </div>
             </div>
 

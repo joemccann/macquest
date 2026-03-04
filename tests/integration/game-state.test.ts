@@ -43,7 +43,7 @@ describe("game-state", () => {
       const playing = gameReducer(initialState, { type: "START_GAME" });
       const state = gameReducer(playing, { type: "CORRECT_KEY" });
       expect(state.phase).toBe("celebrating");
-      expect(state.score).toBe(1);
+      expect(state.score).toBe(100);
       expect(state.wrongKey).toBe(false);
     });
 
@@ -115,9 +115,9 @@ describe("game-state", () => {
     it("handles NEXT_LEVEL - wraps around after last level", () => {
       let state = gameReducer(initialState, { type: "START_GAME" });
 
-      // Complete all 4 levels
-      const levelLengths = [8, 10, 10, 12];
-      for (let level = 0; level < 4; level++) {
+      // Complete all 12 levels
+      const levelLengths = [8, 10, 10, 12, 12, 12, 10, 12, 12, 10, 10, 14];
+      for (let level = 0; level < 12; level++) {
         for (let i = 0; i < levelLengths[level]; i++) {
           state = gameReducer(state, { type: "CORRECT_KEY" });
           state = gameReducer(state, { type: "FINISH_CELEBRATION" });
@@ -129,7 +129,6 @@ describe("game-state", () => {
       expect(state.phase).toBe("playing");
       expect(state.currentLevel).toBe(0);
       expect(state.currentLetterIndex).toBe(0);
-      expect(state.score).toBe(0);
     });
 
     it("returns same state for unknown action", () => {

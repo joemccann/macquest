@@ -1,20 +1,32 @@
 # MacQuest: The Typing Adventure
 
-A typing game designed for young children learning the keyboard on a MacBook Pro. Turns a professional laptop into a playful, indestructible learning toy focused on Home Row keys.
+A typing game designed for young children learning the keyboard on a MacBook Pro. Turns a professional laptop into a playful, indestructible learning toy that progresses through the entire keyboard.
 
 ## What It Does
 
-MacQuest guides kids through progressive typing levels with a space-themed UI. A target letter is displayed at 140-180px, the matching key glows on an on-screen MacBook keyboard, and each correct keypress triggers particle explosions and spoken encouragement.
+MacQuest guides kids through 12 progressive typing levels with a space-themed UI. A target letter is displayed at 140-180px, the matching key glows on an on-screen MacBook keyboard, and each correct keypress triggers particle explosions and spoken encouragement.
 
 **Levels:**
 
 1. **Magic Buttons** - F and J only (the keys with physical ridges)
 2. **Home Row Fingers** - D, K, S, L added
-3. **Full Home Row** - All home row keys including A, G, H, L, ;
-4. **Home Row Master** - Mixed home row at speed
+3. **Full Home Row** - All home row keys including A, G, H, ;
+4. **Home Row Master** - Mixed home row review
+5. **Top Row Left** - Q, W, E, R, T
+6. **Top Row Right** - Y, U, I, O, P
+7. **Top Row Master** - Full QWERTY row
+8. **Bottom Row Left** - Z, X, C, V, B
+9. **Bottom Row Right** - N, M, comma, period, /
+10. **Bottom Row Master** - Full bottom row
+11. **Number Row** - 1 through 0
+12. **Full Keyboard Challenge** - Random selection from all keys
+
+After level 12, the game wraps back to level 1 with shuffled letters.
 
 ## Key Features
 
+- **Points-Based Scoring** - +100 per correct key, -100 per wrong key (floor at 0), with random bonus for perfect levels
+- **Progress Persistence** - localStorage saves level, score, and progress so kids can pick up where they left off
 - **Mac Shield** - Intercepts CMD+Q, CMD+W, CMD+R and other system shortcuts so kids can't accidentally close the browser
 - **Pre-recorded Voice Audio** - 60+ ElevenLabs MP3s for encouragement phrases, with Web Speech API fallback
 - **AI-Generated Praise** - Vercel AI SDK generates unique celebration messages via Claude
@@ -67,6 +79,7 @@ src/
     useSpeech.ts          # Audio playback with synthesis fallback
   lib/
     game-state.ts         # Reducer-based game state and level definitions
+    save-state.ts         # localStorage persistence for progress
     phrases.ts            # Encouragement phrase pools
     keyboard-layout.ts    # MacBook key positions and metadata
 public/

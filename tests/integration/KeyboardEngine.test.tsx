@@ -20,6 +20,7 @@ vi.mock("@/lib/phrases", () => ({
 describe("KeyboardEngine", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
   });
 
   it("shows welcome screen initially", () => {
@@ -241,7 +242,7 @@ describe("KeyboardEngine", () => {
 
     // Level complete screen shows the number of letters typed
     expect(
-      screen.getByText(/You typed 8 letters perfectly!/)
+      screen.getByText(/You typed 8 letters!/)
     ).toBeInTheDocument();
 
     globalThis.setTimeout = originalSetTimeout;

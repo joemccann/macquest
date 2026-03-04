@@ -1,3 +1,5 @@
+import type { SaveState } from "./save-state";
+
 export type GamePhase = "welcome" | "playing" | "celebrating" | "level-complete";
 
 export interface GameState {
@@ -11,6 +13,9 @@ export interface GameState {
   celebrationMessage: string;
   wrongKey: boolean;
   wrongKeyMessage: string;
+  wrongCountThisLevel: number;
+  perfectLevels: number[];
+  bonusAwarded: number;
 }
 
 export type GameAction =
@@ -20,17 +25,62 @@ export type GameAction =
   | { type: "CLEAR_WRONG" }
   | { type: "SET_CELEBRATION_MESSAGE"; message: string }
   | { type: "FINISH_CELEBRATION" }
-  | { type: "NEXT_LEVEL" };
+  | { type: "NEXT_LEVEL" }
+  | { type: "RESUME_GAME"; save: SaveState };
 
-const LEVELS: string[][] = [
-  // Level 1: Magic Buttons only
+// All keyboard keys for the final challenge level
+const ALL_KEYS = [
+  "A","B","C","D","E","F","G","H","I","J","K","L","M",
+  "N","O","P","Q","R","S","T","U","V","W","X","Y","Z",
+  "1","2","3","4","5","6","7","8","9","0",
+  ",",".","/",";",
+];
+
+function generateLevel12(): string[] {
+  const shuffled = [...ALL_KEYS].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 14);
+}
+
+export const LEVELS: string[][] = [
+  // Level 1: Magic Buttons
   ["F", "J", "F", "J", "J", "F", "F", "J"],
-  // Level 2: Home row fingers
+  // Level 2: Home Row Fingers
   ["D", "K", "F", "J", "D", "K", "S", "L", "F", "J"],
-  // Level 3: Full home row
+  // Level 3: Full Home Row
   ["A", "S", "D", "F", "G", "H", "J", "K", "L", ";"],
-  // Level 4: Home row mixed
+  // Level 4: Home Row Master
   ["F", "J", "D", "K", "S", "L", "A", ";", "G", "H", "F", "J"],
+  // Level 5: Top Row Left
+  ["Q", "W", "E", "R", "T", "F", "J", "Q", "W", "E", "R", "T"],
+  // Level 6: Top Row Right
+  ["Y", "U", "I", "O", "P", "F", "J", "Y", "U", "I", "O", "P"],
+  // Level 7: Top Row Master
+  ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+  // Level 8: Bottom Row Left
+  ["Z", "X", "C", "V", "B", "F", "J", "Z", "X", "C", "V", "B"],
+  // Level 9: Bottom Row Right
+  ["N", "M", ",", ".", "/", "F", "J", "N", "M", ",", ".", "/"],
+  // Level 10: Bottom Row Master
+  ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "/"],
+  // Level 11: Number Row
+  ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+  // Level 12: Full Keyboard Challenge (generated randomly)
+  generateLevel12(),
+];
+
+export const LEVEL_NAMES = [
+  "Magic Buttons",
+  "Home Row Fingers",
+  "Full Home Row",
+  "Home Row Master",
+  "Top Row Left",
+  "Top Row Right",
+  "Top Row Master",
+  "Bottom Row Left",
+  "Bottom Row Right",
+  "Bottom Row Master",
+  "Number Row",
+  "Full Keyboard Challenge",
 ];
 
 export function getInitialState(): GameState {
@@ -46,6 +96,9 @@ export function getInitialState(): GameState {
     celebrationMessage: "",
     wrongKey: false,
     wrongKeyMessage: "",
+    wrongCountThisLevel: 0,
+    perfectLevels: [],
+    bonusAwarded: 0,
   };
 }
 
@@ -65,6 +118,33 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         celebrationMessage: "",
         wrongKey: false,
         wrongKeyMessage: "",
+        wrongCountThisLevel: 0,
+        perfectLevels: [],
+        bonusAwarded: 0,
+      };
+    }
+
+    case "RESUME_GAME": {
+      const { save } = action;
+      const levelIndex = Math.min(save.currentLevel, LEVELS.length - 1);
+      // Regenerate level 12 if resuming there
+      const letters = levelIndex === 11 ? generateLevel12() : LEVELS[levelIndex];
+      const letterIndex = Math.min(save.currentLetterIndex, letters.length - 1);
+      return {
+        ...state,
+        phase: "playing",
+        currentLevel: levelIndex,
+        currentLetterIndex: letterIndex,
+        targetLetter: letters[letterIndex],
+        letters,
+        score: save.score,
+        totalLetters: letters.length,
+        celebrationMessage: "",
+        wrongKey: false,
+        wrongKeyMessage: "",
+        wrongCountThisLevel: save.wrongCountThisLevel,
+        perfectLevels: save.perfectLevels,
+        bonusAwarded: 0,
       };
     }
 
@@ -72,13 +152,19 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         phase: "celebrating",
-        score: state.score + 1,
+        score: state.score + 100,
         wrongKey: false,
       };
     }
 
     case "WRONG_KEY": {
-      return { ...state, wrongKey: true, wrongKeyMessage: action.message };
+      return {
+        ...state,
+        wrongKey: true,
+        wrongKeyMessage: action.message,
+        score: Math.max(0, state.score - 100),
+        wrongCountThisLevel: state.wrongCountThisLevel + 1,
+      };
     }
 
     case "CLEAR_WRONG": {
@@ -93,11 +179,30 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const nextIndex = state.currentLetterIndex + 1;
 
       if (nextIndex >= state.letters.length) {
-        // Level complete
+        // Level complete — check for perfect bonus
+        const isPerfect = state.wrongCountThisLevel === 0;
+        let bonusAwarded = 0;
+        let newScore = state.score;
+        const newPerfectLevels = [...state.perfectLevels];
+
+        if (isPerfect) {
+          newPerfectLevels.push(state.currentLevel);
+          if (newScore === 0) {
+            bonusAwarded = 500;
+          } else {
+            const multiplier = 0.5 + Math.random() * 0.5; // 0.50 to 1.00
+            bonusAwarded = Math.round(newScore * multiplier);
+          }
+          newScore += bonusAwarded;
+        }
+
         return {
           ...state,
           phase: "level-complete",
           celebrationMessage: "",
+          score: newScore,
+          bonusAwarded,
+          perfectLevels: newPerfectLevels,
         };
       }
 
@@ -122,14 +227,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           currentLetterIndex: 0,
           targetLetter: letters[0],
           letters,
-          score: 0,
           totalLetters: letters.length,
           celebrationMessage: "",
           wrongKey: false,
+          wrongCountThisLevel: 0,
+          bonusAwarded: 0,
         };
       }
 
-      const letters = LEVELS[nextLevel];
+      // Regenerate level 12 each time
+      const letters = nextLevel === 11 ? generateLevel12() : LEVELS[nextLevel];
       return {
         ...state,
         phase: "playing",
@@ -137,10 +244,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         currentLetterIndex: 0,
         targetLetter: letters[0],
         letters,
-        score: 0,
         totalLetters: letters.length,
         celebrationMessage: "",
         wrongKey: false,
+        wrongCountThisLevel: 0,
+        bonusAwarded: 0,
       };
     }
 
