@@ -9,6 +9,7 @@ import type { SaveState } from "@/lib/save-state";
 function createPlayingState(overrides: Partial<GameState> = {}): GameState {
   return {
     phase: "playing",
+    mode: "keys",
     currentLevel: 0,
     currentLetterIndex: 0,
     targetLetter: "F",
@@ -21,19 +22,23 @@ function createPlayingState(overrides: Partial<GameState> = {}): GameState {
     wrongCountThisLevel: 0,
     perfectLevels: [],
     bonusAwarded: 0,
+    currentWord: "",
+    spellingWordIndex: 0,
     ...overrides,
   };
 }
 
 function createSaveState(overrides: Partial<SaveState> = {}): SaveState {
   return {
-    version: 1,
+    version: 2,
     currentLevel: 0,
     currentLetterIndex: 0,
     score: 0,
     perfectLevels: [],
     wrongCountThisLevel: 0,
     lastSavedAt: Date.now(),
+    mode: "keys",
+    spellingWordIndex: 0,
     ...overrides,
   };
 }

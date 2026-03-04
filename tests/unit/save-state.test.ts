@@ -12,16 +12,20 @@ const validInput = {
   score: 1200,
   perfectLevels: [1, 2],
   wrongCountThisLevel: 1,
+  mode: "keys" as const,
+  spellingWordIndex: 0,
 };
 
 const validSaveState = {
-  version: 1,
+  version: 2,
   currentLevel: 3,
   currentLetterIndex: 5,
   score: 1200,
   perfectLevels: [1, 2],
   wrongCountThisLevel: 1,
   lastSavedAt: 1700000000000,
+  mode: "keys" as const,
+  spellingWordIndex: 0,
 };
 
 describe("saveProgress", () => {
@@ -33,10 +37,10 @@ describe("saveProgress", () => {
     expect(parsed.currentLevel).toBe(3);
   });
 
-  it("saved data includes version=1 and all fields from input", () => {
+  it("saved data includes version=2 and all fields from input", () => {
     saveProgress(validInput);
     const parsed = JSON.parse(localStorage.getItem("macquest-save")!);
-    expect(parsed.version).toBe(1);
+    expect(parsed.version).toBe(2);
     expect(parsed.currentLevel).toBe(validInput.currentLevel);
     expect(parsed.currentLetterIndex).toBe(validInput.currentLetterIndex);
     expect(parsed.score).toBe(validInput.score);
@@ -70,13 +74,15 @@ describe("loadProgress", () => {
     localStorage.setItem("macquest-save", JSON.stringify(validSaveState));
     const result = loadProgress();
     expect(result).not.toBeNull();
-    expect(result!.version).toBe(1);
+    expect(result!.version).toBe(2);
     expect(result!.currentLevel).toBe(3);
     expect(result!.currentLetterIndex).toBe(5);
     expect(result!.score).toBe(1200);
     expect(result!.perfectLevels).toEqual([1, 2]);
     expect(result!.wrongCountThisLevel).toBe(1);
     expect(result!.lastSavedAt).toBe(1700000000000);
+    expect(result!.mode).toBe("keys");
+    expect(result!.spellingWordIndex).toBe(0);
   });
 
   it("returns null when JSON is malformed (parse error)", () => {
@@ -197,7 +203,7 @@ describe("isValidSaveState (tested through loadProgress)", () => {
   it("rejects when version is wrong number", () => {
     localStorage.setItem(
       "macquest-save",
-      JSON.stringify({ ...validSaveState, version: 2 })
+      JSON.stringify({ ...validSaveState, version: 99 })
     );
     expect(loadProgress()).toBeNull();
   });
@@ -205,7 +211,7 @@ describe("isValidSaveState (tested through loadProgress)", () => {
   it("rejects when version is a string", () => {
     localStorage.setItem(
       "macquest-save",
-      JSON.stringify({ ...validSaveState, version: "1" })
+      JSON.stringify({ ...validSaveState, version: "2" })
     );
     expect(loadProgress()).toBeNull();
   });
@@ -299,19 +305,50 @@ describe("round-trip: saveProgress -> loadProgress", () => {
     saveProgress(validInput);
     const result = loadProgress();
     expect(result).not.toBeNull();
-    expect(result!.version).toBe(1);
+    expect(result!.version).toBe(2);
     expect(result!.currentLevel).toBe(validInput.currentLevel);
     expect(result!.currentLetterIndex).toBe(validInput.currentLetterIndex);
     expect(result!.score).toBe(validInput.score);
     expect(result!.perfectLevels).toEqual(validInput.perfectLevels);
     expect(result!.wrongCountThisLevel).toBe(validInput.wrongCountThisLevel);
     expect(typeof result!.lastSavedAt).toBe("number");
+    expect(result!.mode).toBe("keys");
+    expect(result!.spellingWordIndex).toBe(0);
   });
 
   it("clearProgress removes data so loadProgress returns null", () => {
     saveProgress(validInput);
     expect(loadProgress()).not.toBeNull();
     clearProgress();
+    expect(loadProgress()).toBeNull();
+  });
+});
+
+describe("v1 migration", () => {
+  const v1Save = {
+    version: 1,
+    currentLevel: 3,
+    currentLetterIndex: 5,
+    score: 1200,
+    perfectLevels: [1, 2],
+    wrongCountThisLevel: 1,
+    lastSavedAt: 1700000000000,
+  };
+
+  it("migrates v1 save to v2 with mode=keys and spellingWordIndex=0", () => {
+    localStorage.setItem("macquest-save", JSON.stringify(v1Save));
+    const result = loadProgress();
+    expect(result).not.toBeNull();
+    expect(result!.version).toBe(2);
+    expect(result!.mode).toBe("keys");
+    expect(result!.spellingWordIndex).toBe(0);
+    expect(result!.currentLevel).toBe(3);
+    expect(result!.score).toBe(1200);
+  });
+
+  it("rejects incomplete v1 save (missing fields)", () => {
+    const incomplete = { version: 1, currentLevel: 3 };
+    localStorage.setItem("macquest-save", JSON.stringify(incomplete));
     expect(loadProgress()).toBeNull();
   });
 });

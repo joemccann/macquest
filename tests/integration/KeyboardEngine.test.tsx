@@ -223,7 +223,7 @@ describe("KeyboardEngine", () => {
     localStorage.setItem(
       "macquest-save",
       JSON.stringify({
-        version: 1,
+        version: 2, mode: "keys", spellingWordIndex: 0,
         currentLevel: 2,
         currentLetterIndex: 3,
         score: 1500,
@@ -243,7 +243,7 @@ describe("KeyboardEngine", () => {
     localStorage.setItem(
       "macquest-save",
       JSON.stringify({
-        version: 1,
+        version: 2, mode: "keys", spellingWordIndex: 0,
         currentLevel: 2,
         currentLetterIndex: 3,
         score: 1500,
@@ -265,7 +265,7 @@ describe("KeyboardEngine", () => {
     localStorage.setItem(
       "macquest-save",
       JSON.stringify({
-        version: 1,
+        version: 2, mode: "keys", spellingWordIndex: 0,
         currentLevel: 5,
         currentLetterIndex: 0,
         score: 3000,

@@ -1,9 +1,13 @@
 import type { SaveState } from "./save-state";
+import { getSpellingWord, SPELLING_WORDS } from "./words";
 
-export type GamePhase = "welcome" | "playing" | "celebrating" | "level-complete" | "victory";
+export type GamePhase = "welcome" | "playing" | "celebrating" | "level-complete" | "victory" | "spelling-intro";
+
+export type GameMode = "keys" | "spelling";
 
 export interface GameState {
   phase: GamePhase;
+  mode: GameMode;
   currentLevel: number;
   currentLetterIndex: number;
   targetLetter: string;
@@ -16,6 +20,8 @@ export interface GameState {
   wrongCountThisLevel: number;
   perfectLevels: number[];
   bonusAwarded: number;
+  currentWord: string;
+  spellingWordIndex: number;
 }
 
 export type GameAction =
@@ -26,7 +32,9 @@ export type GameAction =
   | { type: "SET_CELEBRATION_MESSAGE"; message: string }
   | { type: "FINISH_CELEBRATION" }
   | { type: "NEXT_LEVEL" }
-  | { type: "RESUME_GAME"; save: SaveState };
+  | { type: "RESUME_GAME"; save: SaveState }
+  | { type: "START_SPELLING" }
+  | { type: "NEXT_WORD" };
 
 // All keyboard keys for the final challenge level
 const ALL_KEYS = [
@@ -83,10 +91,15 @@ export const LEVEL_NAMES = [
   "Full Keyboard Challenge",
 ];
 
+function wordToLetters(word: string): string[] {
+  return word.toUpperCase().split("");
+}
+
 export function getInitialState(): GameState {
   const letters = LEVELS[0];
   return {
     phase: "welcome",
+    mode: "keys",
     currentLevel: 0,
     currentLetterIndex: 0,
     targetLetter: letters[0],
@@ -99,6 +112,8 @@ export function getInitialState(): GameState {
     wrongCountThisLevel: 0,
     perfectLevels: [],
     bonusAwarded: 0,
+    currentWord: "",
+    spellingWordIndex: 0,
   };
 }
 
@@ -109,6 +124,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         phase: "playing",
+        mode: "keys",
         currentLevel: 0,
         currentLetterIndex: 0,
         targetLetter: letters[0],
@@ -121,11 +137,39 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         wrongCountThisLevel: 0,
         perfectLevels: [],
         bonusAwarded: 0,
+        currentWord: "",
+        spellingWordIndex: 0,
       };
     }
 
     case "RESUME_GAME": {
       const { save } = action;
+
+      if (save.mode === "spelling") {
+        const word = getSpellingWord(save.spellingWordIndex);
+        const letters = wordToLetters(word);
+        const letterIndex = Math.min(save.currentLetterIndex, letters.length - 1);
+        return {
+          ...state,
+          phase: "playing",
+          mode: "spelling",
+          currentLevel: save.spellingWordIndex,
+          currentLetterIndex: letterIndex,
+          targetLetter: letters[letterIndex],
+          letters,
+          score: save.score,
+          totalLetters: letters.length,
+          celebrationMessage: "",
+          wrongKey: false,
+          wrongKeyMessage: "",
+          wrongCountThisLevel: save.wrongCountThisLevel,
+          perfectLevels: save.perfectLevels,
+          bonusAwarded: 0,
+          currentWord: word,
+          spellingWordIndex: save.spellingWordIndex,
+        };
+      }
+
       const levelIndex = Math.min(save.currentLevel, LEVELS.length - 1);
       // Regenerate level 12 if resuming there
       const letters = levelIndex === 11 ? generateLevel12() : LEVELS[levelIndex];
@@ -133,6 +177,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         phase: "playing",
+        mode: "keys",
         currentLevel: levelIndex,
         currentLetterIndex: letterIndex,
         targetLetter: letters[letterIndex],
@@ -145,6 +190,30 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         wrongCountThisLevel: save.wrongCountThisLevel,
         perfectLevels: save.perfectLevels,
         bonusAwarded: 0,
+        currentWord: "",
+        spellingWordIndex: 0,
+      };
+    }
+
+    case "START_SPELLING": {
+      const word = getSpellingWord(0);
+      const letters = wordToLetters(word);
+      return {
+        ...state,
+        phase: "playing",
+        mode: "spelling",
+        currentLevel: 0,
+        currentLetterIndex: 0,
+        targetLetter: letters[0],
+        letters,
+        totalLetters: letters.length,
+        celebrationMessage: "",
+        wrongKey: false,
+        wrongKeyMessage: "",
+        wrongCountThisLevel: 0,
+        bonusAwarded: 0,
+        currentWord: word,
+        spellingWordIndex: 0,
       };
     }
 
@@ -179,14 +248,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const nextIndex = state.currentLetterIndex + 1;
 
       if (nextIndex >= state.letters.length) {
-        // Level complete — check for perfect bonus
+        // Level/word complete — check for perfect bonus
         const isPerfect = state.wrongCountThisLevel === 0;
         let bonusAwarded = 0;
         let newScore = state.score;
         const newPerfectLevels = [...state.perfectLevels];
 
         if (isPerfect) {
-          newPerfectLevels.push(state.currentLevel);
+          newPerfectLevels.push(state.mode === "spelling" ? state.spellingWordIndex : state.currentLevel);
           if (newScore === 0) {
             bonusAwarded = 500;
           } else {
@@ -238,6 +307,34 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         wrongKey: false,
         wrongCountThisLevel: 0,
         bonusAwarded: 0,
+      };
+    }
+
+    case "NEXT_WORD": {
+      const nextWordIndex = state.spellingWordIndex + 1;
+      if (nextWordIndex >= SPELLING_WORDS.length) {
+        return {
+          ...state,
+          phase: "victory",
+        };
+      }
+
+      const word = getSpellingWord(nextWordIndex);
+      const letters = wordToLetters(word);
+      return {
+        ...state,
+        phase: "playing",
+        currentLevel: nextWordIndex,
+        currentLetterIndex: 0,
+        targetLetter: letters[0],
+        letters,
+        totalLetters: letters.length,
+        celebrationMessage: "",
+        wrongKey: false,
+        wrongCountThisLevel: 0,
+        bonusAwarded: 0,
+        currentWord: word,
+        spellingWordIndex: nextWordIndex,
       };
     }
 

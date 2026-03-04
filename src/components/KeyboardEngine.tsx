@@ -27,16 +27,16 @@ export function KeyboardEngine() {
   useMacShield();
 
   // Save progress on level-complete and next-level
-  const { phase, currentLevel, currentLetterIndex, score, perfectLevels, wrongCountThisLevel } = state;
+  const { phase, mode, currentLevel, currentLetterIndex, score, perfectLevels, wrongCountThisLevel, spellingWordIndex } = state;
   useEffect(() => {
     if (phase === "victory") {
       clearProgress();
     } else if (phase === "level-complete" || phase === "playing") {
-      if (score > 0 || currentLevel > 0 || currentLetterIndex > 0) {
-        saveProgress({ currentLevel, currentLetterIndex, score, perfectLevels, wrongCountThisLevel });
+      if (score > 0 || currentLevel > 0 || currentLetterIndex > 0 || spellingWordIndex > 0) {
+        saveProgress({ currentLevel, currentLetterIndex, score, perfectLevels, wrongCountThisLevel, mode, spellingWordIndex });
       }
     }
-  }, [phase, currentLevel, currentLetterIndex, score, perfectLevels, wrongCountThisLevel]);
+  }, [phase, mode, currentLevel, currentLetterIndex, score, perfectLevels, wrongCountThisLevel, spellingWordIndex]);
 
   const handleCorrect = useCallback(() => {
     setPressedKey(state.targetLetter);
@@ -87,6 +87,14 @@ export function KeyboardEngine() {
     dispatch({ type: "NEXT_LEVEL" });
   }, []);
 
+  const handleStartSpelling = useCallback(() => {
+    dispatch({ type: "START_SPELLING" });
+  }, []);
+
+  const handleNextWord = useCallback(() => {
+    dispatch({ type: "NEXT_WORD" });
+  }, []);
+
   const progress =
     state.totalLetters > 0
       ? (state.currentLetterIndex / state.totalLetters) * 100
@@ -107,6 +115,8 @@ export function KeyboardEngine() {
   }
 
   if (state.phase === "victory") {
+    const isSpellingVictory = state.mode === "spelling";
+
     return (
       <>
         <SpaceBackground />
@@ -117,7 +127,7 @@ export function KeyboardEngine() {
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 10 }}
           >
-            🏆
+            {isSpellingVictory ? "🎓" : "🏆"}
           </motion.div>
 
           <motion.div
@@ -135,10 +145,12 @@ export function KeyboardEngine() {
                 filter: "drop-shadow(0 4px 16px rgba(251, 191, 36, 0.3))",
               }}
             >
-              You Won!
+              {isSpellingVictory ? "Spelling Champion!" : "You Won!"}
             </h2>
             <p className="text-xl text-white/50 font-medium">
-              You mastered the entire keyboard!
+              {isSpellingVictory
+                ? "You spelled all 100 words!"
+                : "You mastered the entire keyboard!"}
             </p>
           </motion.div>
 
@@ -164,17 +176,54 @@ export function KeyboardEngine() {
             </div>
             {state.perfectLevels.length > 0 && (
               <p className="text-sm text-white/40 mt-3">
-                {state.perfectLevels.length} perfect level{state.perfectLevels.length !== 1 ? "s" : ""}!
+                {state.perfectLevels.length} perfect {state.mode === "spelling" ? "word" : "level"}{state.perfectLevels.length !== 1 ? "s" : ""}!
               </p>
             )}
           </motion.div>
+
+          {/* Keys victory: show both "Start Spelling" and "Play Again" */}
+          {!isSpellingVictory && (
+            <motion.div
+              className="flex flex-col items-center gap-3"
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.6 }}
+            >
+              <p className="text-lg text-white/40 font-medium">
+                Ready to start spelling words?
+              </p>
+              <motion.button
+                onClick={handleStartSpelling}
+                className="relative group cursor-pointer"
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.94 }}
+              >
+                <div
+                  className="absolute -inset-2 rounded-full opacity-50 group-hover:opacity-70 transition-opacity"
+                  style={{
+                    background: "linear-gradient(135deg, #34d399, #3b82f6)",
+                    filter: "blur(14px)",
+                  }}
+                />
+                <div
+                  className="relative px-14 py-5 rounded-full text-2xl font-bold text-white"
+                  style={{
+                    background: "linear-gradient(135deg, #10b981 0%, #3b82f6 100%)",
+                    boxShadow: "0 4px 24px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.15)",
+                  }}
+                >
+                  Start Spelling Words!
+                </div>
+              </motion.button>
+            </motion.div>
+          )}
 
           <motion.button
             onClick={handleStart}
             className="relative group cursor-pointer"
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.8 }}
+            transition={{ delay: isSpellingVictory ? 0.8 : 1.0 }}
             whileHover={{ scale: 1.06 }}
             whileTap={{ scale: 0.94 }}
           >
@@ -188,8 +237,12 @@ export function KeyboardEngine() {
             <div
               className="relative px-14 py-5 rounded-full text-2xl font-bold text-white"
               style={{
-                background: "linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #3b82f6 100%)",
-                boxShadow: "0 4px 24px rgba(139, 92, 246, 0.4), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.15)",
+                background: isSpellingVictory
+                  ? "linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #3b82f6 100%)"
+                  : "rgba(255,255,255,0.1)",
+                boxShadow: isSpellingVictory
+                  ? "0 4px 24px rgba(139, 92, 246, 0.4), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.15)"
+                  : "inset 0 1px 0 rgba(255,255,255,0.1)",
               }}
             >
               Play Again
@@ -202,6 +255,7 @@ export function KeyboardEngine() {
 
   if (state.phase === "level-complete") {
     const isPerfect = state.bonusAwarded > 0;
+    const isSpelling = state.mode === "spelling";
 
     return (
       <>
@@ -232,10 +286,12 @@ export function KeyboardEngine() {
                 filter: "drop-shadow(0 4px 16px rgba(251, 191, 36, 0.3))",
               }}
             >
-              Level Complete!
+              {isSpelling ? "Word Complete!" : "Level Complete!"}
             </h2>
             <p className="text-xl text-white/50 font-medium">
-              You typed {state.letters.length} letters!
+              {isSpelling
+                ? `You spelled "${state.currentWord.toUpperCase()}"!`
+                : `You typed ${state.letters.length} letters!`}
             </p>
           </motion.div>
 
@@ -277,7 +333,7 @@ export function KeyboardEngine() {
           </motion.div>
 
           <motion.button
-            onClick={handleNextLevel}
+            onClick={isSpelling ? handleNextWord : handleNextLevel}
             className="relative group cursor-pointer"
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -299,13 +355,49 @@ export function KeyboardEngine() {
                 boxShadow: "0 4px 24px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.15)",
               }}
             >
-              Next Level →
+              {isSpelling ? "Next Word →" : "Next Level →"}
             </div>
           </motion.button>
         </div>
       </>
     );
   }
+
+  // Spelling mode: word display above the target letter
+  const wordDisplay = state.mode === "spelling" && state.currentWord ? (
+    <motion.div
+      className="glass-panel px-6 py-3 mb-2"
+      initial={{ y: -10, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+    >
+      <div className="flex items-center justify-center gap-1.5">
+        {state.currentWord.toUpperCase().split("").map((letter, i) => (
+          <span
+            key={i}
+            className="text-4xl md:text-5xl font-bold transition-all duration-200"
+            style={{
+              color:
+                i < state.currentLetterIndex
+                  ? "rgba(52, 211, 153, 0.5)" // completed — green/dim
+                  : i === state.currentLetterIndex
+                    ? undefined // current — gradient below
+                    : "rgba(255, 255, 255, 0.2)", // upcoming — dim
+              ...(i === state.currentLetterIndex
+                ? {
+                    background: "linear-gradient(135deg, #fce7f3, #e9d5ff, #c7d2fe)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    filter: "drop-shadow(0 0 12px rgba(139, 92, 246, 0.5))",
+                  }
+                : {}),
+            }}
+          >
+            {letter}
+          </span>
+        ))}
+      </div>
+    </motion.div>
+  ) : null;
 
   return (
     <>
@@ -316,12 +408,16 @@ export function KeyboardEngine() {
           <div className="glass-panel px-5 py-3">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <span className="text-lg">🚀</span>
+                <span className="text-lg">{state.mode === "spelling" ? "📝" : "🚀"}</span>
                 <span className="text-sm font-medium text-white/50">
-                  Level {state.currentLevel + 1}
+                  {state.mode === "spelling"
+                    ? `Word ${state.spellingWordIndex + 1}`
+                    : `Level ${state.currentLevel + 1}`}
                 </span>
                 <span className="text-xs text-white/25 font-medium">
-                  · {LEVEL_NAMES[state.currentLevel] ?? "Challenge"}
+                  · {state.mode === "spelling"
+                    ? state.currentWord.toUpperCase()
+                    : (LEVEL_NAMES[state.currentLevel] ?? "Challenge")}
                 </span>
               </div>
               <div className="flex items-center gap-3">
@@ -370,6 +466,9 @@ export function KeyboardEngine() {
             </div>
           </div>
         </div>
+
+        {/* Word display for spelling mode */}
+        {wordDisplay}
 
         {/* Target letter display */}
         <div className="relative flex items-center justify-center" style={{ minHeight: 200 }}>
@@ -456,7 +555,17 @@ export function KeyboardEngine() {
           {/* Hint text (only when playing and no other message) */}
           {state.phase === "playing" && !state.wrongKey && !state.celebrationMessage && (
             <p className="text-base text-white/30 font-medium text-center">
-              Press the{" "}
+              {state.mode === "spelling" ? (
+                <>
+                  Spell:{" "}
+                  <span className="font-bold text-white/40">
+                    {state.currentWord.toUpperCase()}
+                  </span>
+                  {" — Press the "}
+                </>
+              ) : (
+                <>Press the{" "}</>
+              )}
               <span
                 className="font-bold"
                 style={{

@@ -62,6 +62,7 @@ describe("gameReducer", () => {
   function createPlayingState(overrides: Partial<GameState> = {}): GameState {
     return {
       phase: "playing",
+      mode: "keys",
       currentLevel: 0,
       currentLetterIndex: 0,
       targetLetter: "F",
@@ -74,6 +75,8 @@ describe("gameReducer", () => {
       wrongCountThisLevel: 0,
       perfectLevels: [],
       bonusAwarded: 0,
+      currentWord: "",
+      spellingWordIndex: 0,
       ...overrides,
     };
   }
@@ -439,6 +442,106 @@ describe("gameReducer", () => {
       );
       expect(state.phase).toBe("victory");
       expect(state.score).toBe(5000);
+    });
+  });
+
+  describe("START_SPELLING", () => {
+    it("transitions to spelling mode playing phase", () => {
+      const state = gameReducer(
+        createPlayingState({ phase: "victory" }),
+        { type: "START_SPELLING" }
+      );
+      expect(state.phase).toBe("playing");
+      expect(state.mode).toBe("spelling");
+    });
+
+    it("loads the first spelling word as letters", () => {
+      const state = gameReducer(
+        createPlayingState({ phase: "victory" }),
+        { type: "START_SPELLING" }
+      );
+      expect(state.currentWord).toBe("cat");
+      expect(state.letters).toEqual(["C", "A", "T"]);
+      expect(state.targetLetter).toBe("C");
+      expect(state.totalLetters).toBe(3);
+    });
+
+    it("preserves score from keys mode", () => {
+      const state = gameReducer(
+        createPlayingState({ phase: "victory", score: 5000 }),
+        { type: "START_SPELLING" }
+      );
+      expect(state.score).toBe(5000);
+    });
+
+    it("resets per-word state", () => {
+      const state = gameReducer(
+        createPlayingState({ phase: "victory", wrongCountThisLevel: 5 }),
+        { type: "START_SPELLING" }
+      );
+      expect(state.wrongCountThisLevel).toBe(0);
+      expect(state.spellingWordIndex).toBe(0);
+      expect(state.currentLetterIndex).toBe(0);
+    });
+  });
+
+  describe("NEXT_WORD", () => {
+    it("advances to the next spelling word", () => {
+      const state = gameReducer(
+        createPlayingState({
+          phase: "level-complete",
+          mode: "spelling",
+          spellingWordIndex: 0,
+          currentWord: "cat",
+        }),
+        { type: "NEXT_WORD" }
+      );
+      expect(state.phase).toBe("playing");
+      expect(state.spellingWordIndex).toBe(1);
+      expect(state.currentWord).toBe("dog");
+      expect(state.letters).toEqual(["D", "O", "G"]);
+      expect(state.targetLetter).toBe("D");
+    });
+
+    it("resets per-word state", () => {
+      const state = gameReducer(
+        createPlayingState({
+          phase: "level-complete",
+          mode: "spelling",
+          spellingWordIndex: 0,
+          wrongCountThisLevel: 3,
+          bonusAwarded: 500,
+        }),
+        { type: "NEXT_WORD" }
+      );
+      expect(state.wrongCountThisLevel).toBe(0);
+      expect(state.bonusAwarded).toBe(0);
+      expect(state.currentLetterIndex).toBe(0);
+    });
+
+    it("transitions to victory when all 100 words are done", () => {
+      const state = gameReducer(
+        createPlayingState({
+          phase: "level-complete",
+          mode: "spelling",
+          spellingWordIndex: 99,
+        }),
+        { type: "NEXT_WORD" }
+      );
+      expect(state.phase).toBe("victory");
+    });
+
+    it("preserves score across words", () => {
+      const state = gameReducer(
+        createPlayingState({
+          phase: "level-complete",
+          mode: "spelling",
+          spellingWordIndex: 0,
+          score: 2000,
+        }),
+        { type: "NEXT_WORD" }
+      );
+      expect(state.score).toBe(2000);
     });
   });
 
