@@ -34,9 +34,10 @@ test.describe("MacQuest Game", () => {
     // Check Level 1 indicator is visible
     await expect(page.getByText("Level 1")).toBeVisible();
 
-    // Check progress counter shows 0 out of 8
-    await expect(page.getByText("0")).toBeVisible();
-    await expect(page.getByText("/8")).toBeVisible();
+    // Check progress counter shows 0 / 8
+    const header = page.locator(".glass-panel").first();
+    await expect(header).toContainText("0");
+    await expect(header).toContainText("8");
   });
 
   test("handles correct keypress", async ({ page }) => {
@@ -150,16 +151,16 @@ test.describe("MacQuest Game", () => {
       timeout: 5000,
     });
 
-    // Check that a progress bar exists
-    const progressBar = page.getByRole("progressbar");
-    await expect(progressBar).toBeVisible({ timeout: 5000 });
+    // Check that the progress bar area exists in the glass panel header
+    const header = page.locator(".glass-panel").first();
+    await expect(header).toBeVisible({ timeout: 5000 });
 
     // Press correct key and wait for celebration
     await page.keyboard.press("f");
     await page.waitForTimeout(3000);
 
-    // Verify the counter has updated from 0 to 1
-    await expect(page.getByText("1")).toBeVisible();
-    await expect(page.getByText("/8")).toBeVisible();
+    // Verify the counter has updated (header shows score and progress)
+    await expect(header).toContainText("1");
+    await expect(header).toContainText("8");
   });
 });

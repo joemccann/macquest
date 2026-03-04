@@ -174,6 +174,19 @@ describe("generatePhrase", () => {
     );
   });
 
+  it("exercises pickRandom history exhaustion on many fallback calls", async () => {
+    // Call enough times to exhaust the history buffer and trigger the pool reset branch
+    mockGenerateText.mockRejectedValue(new Error("API error"));
+
+    // POSITIVE_PHRASES has 37 entries, maxHistory = min(floor(37/2), 12) = 12
+    // After 37+ calls, the history-based filtering must eventually use the full pool fallback
+    for (let i = 0; i < 40; i++) {
+      const result = await generatePhrase();
+      expect(result.text).toBeTruthy();
+      expect(result.audioFile).toBeDefined();
+    }
+  });
+
   it("returns different phrases on subsequent fallback calls", async () => {
     // Call multiple times with errors to test history tracking
     mockGenerateText.mockRejectedValue(new Error("API error"));

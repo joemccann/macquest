@@ -218,6 +218,71 @@ describe("KeyboardEngine", () => {
     clearTimeoutSpy.mockRestore();
   });
 
+  it("shows Continue Adventure when saved game exists", () => {
+    // Seed localStorage with a save
+    localStorage.setItem(
+      "macquest-save",
+      JSON.stringify({
+        version: 1,
+        currentLevel: 2,
+        currentLetterIndex: 3,
+        score: 1500,
+        perfectLevels: [0, 1],
+        wrongCountThisLevel: 0,
+        lastSavedAt: Date.now(),
+      })
+    );
+
+    render(<KeyboardEngine />);
+    expect(screen.getByText("Continue Adventure")).toBeInTheDocument();
+    expect(screen.getByText("Start Over")).toBeInTheDocument();
+    expect(screen.getByText(/Welcome back/)).toBeInTheDocument();
+  });
+
+  it("resumes saved game when clicking Continue Adventure", () => {
+    localStorage.setItem(
+      "macquest-save",
+      JSON.stringify({
+        version: 1,
+        currentLevel: 2,
+        currentLetterIndex: 3,
+        score: 1500,
+        perfectLevels: [0, 1],
+        wrongCountThisLevel: 0,
+        lastSavedAt: Date.now(),
+      })
+    );
+
+    render(<KeyboardEngine />);
+    fireEvent.click(screen.getByText("Continue Adventure"));
+
+    // Should be in playing phase at level 3 (0-indexed level 2)
+    expect(screen.getByText("Level 3")).toBeInTheDocument();
+    expect(screen.queryByText("Continue Adventure")).not.toBeInTheDocument();
+  });
+
+  it("starts fresh when clicking Start Over with saved game", () => {
+    localStorage.setItem(
+      "macquest-save",
+      JSON.stringify({
+        version: 1,
+        currentLevel: 5,
+        currentLetterIndex: 0,
+        score: 3000,
+        perfectLevels: [],
+        wrongCountThisLevel: 0,
+        lastSavedAt: Date.now(),
+      })
+    );
+
+    render(<KeyboardEngine />);
+    fireEvent.click(screen.getByText("Start Over"));
+
+    // Should start at level 1
+    expect(screen.getByText("Level 1")).toBeInTheDocument();
+    expect(screen.getByText(/Magic Buttons/)).toBeInTheDocument();
+  });
+
   it("displays letter count on level-complete screen", async () => {
     const originalSetTimeout = globalThis.setTimeout;
     const mockSetTimeout = vi.fn((callback: () => void, ms?: number) => {
