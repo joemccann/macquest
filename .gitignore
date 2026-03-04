@@ -12,12 +12,16 @@ build/
 
 # misc
 .DS_Store
+Thumbs.db
 *.pem
 
 # debug
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # env
+.env
 .env*.local
 
 # vercel
@@ -27,8 +31,18 @@ npm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# IDE
+.idea/
+.vscode/
+
+# test coverage
+coverage/
+
 # screenshots from dev/testing
 *.png
+
+# dev artifacts
+PROMPT.md
 
 # playwright
 .playwright-mcp/
