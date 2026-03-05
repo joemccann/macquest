@@ -322,4 +322,115 @@ describe("KeyboardEngine", () => {
     expect(screen.getByText("Word 1")).toBeInTheDocument();
     expect(screen.queryByText(/Practice Typing/)).not.toBeInTheDocument();
   });
+
+  it("shows word display and spell hint in spelling mode", () => {
+    render(<KeyboardEngine />);
+    fireEvent.click(screen.getByText(/Spelling Words/));
+
+    // Word display shows individual letters
+    // First word is "cat" → C, A, T
+    expect(screen.getByText("Word 1")).toBeInTheDocument();
+    // The hint says "Spell: CAT — Press the C key!"
+    expect(screen.getByText(/Spell:/)).toBeInTheDocument();
+    expect(screen.getByText("CAT")).toBeInTheDocument();
+  });
+
+  it("shows 'Try Again!' on wrong key in spelling mode", () => {
+    render(<KeyboardEngine />);
+    fireEvent.click(screen.getByText(/Spelling Words/));
+
+    // First target is "C" (for "cat"), press wrong key
+    fireEvent.keyDown(window, { key: "z" });
+
+    // Spelling mode shows "Try Again!" not a random phrase
+    expect(screen.getByText("Try Again!")).toBeInTheDocument();
+  });
+
+  it("advances letters on correct key in spelling mode", async () => {
+    const originalSetTimeout = globalThis.setTimeout;
+    const mockSetTimeout = vi.fn((callback: () => void, ms?: number) => {
+      if (ms === 1200 || ms === 3500) {
+        callback();
+        return 0 as unknown as ReturnType<typeof setTimeout>;
+      }
+      return originalSetTimeout(callback, ms);
+    });
+    globalThis.setTimeout = mockSetTimeout as unknown as typeof setTimeout;
+
+    render(<KeyboardEngine />);
+    fireEvent.click(screen.getByText(/Spelling Words/));
+
+    // Press "c" (first letter of "cat")
+    await act(async () => {
+      fireEvent.keyDown(window, { key: "c" });
+      await Promise.resolve();
+    });
+
+    // After celebration timer fires, target should advance to "A"
+    // The hint text should now say "Press the A key!"
+    expect(screen.getByText(/key!/)).toBeInTheDocument();
+
+    globalThis.setTimeout = originalSetTimeout;
+  });
+
+  it("shows word complete after spelling entire word", async () => {
+    const originalSetTimeout = globalThis.setTimeout;
+    const mockSetTimeout = vi.fn((callback: () => void, ms?: number) => {
+      if (ms === 1200 || ms === 3500) {
+        callback();
+        return 0 as unknown as ReturnType<typeof setTimeout>;
+      }
+      return originalSetTimeout(callback, ms);
+    });
+    globalThis.setTimeout = mockSetTimeout as unknown as typeof setTimeout;
+
+    render(<KeyboardEngine />);
+    fireEvent.click(screen.getByText(/Spelling Words/));
+
+    // Spell "cat" — c, a, t
+    for (const letter of ["c", "a", "t"]) {
+      await act(async () => {
+        fireEvent.keyDown(window, { key: letter });
+        await Promise.resolve();
+      });
+    }
+
+    // Should show word complete screen
+    expect(screen.getByText("Word Complete!")).toBeInTheDocument();
+    expect(screen.getByText(/You spelled "CAT"!/)).toBeInTheDocument();
+    expect(screen.getByText(/Next Word/)).toBeInTheDocument();
+
+    globalThis.setTimeout = originalSetTimeout;
+  });
+
+  it("advances to next word after clicking Next Word", async () => {
+    const originalSetTimeout = globalThis.setTimeout;
+    const mockSetTimeout = vi.fn((callback: () => void, ms?: number) => {
+      if (ms === 1200 || ms === 3500) {
+        callback();
+        return 0 as unknown as ReturnType<typeof setTimeout>;
+      }
+      return originalSetTimeout(callback, ms);
+    });
+    globalThis.setTimeout = mockSetTimeout as unknown as typeof setTimeout;
+
+    render(<KeyboardEngine />);
+    fireEvent.click(screen.getByText(/Spelling Words/));
+
+    // Spell "cat"
+    for (const letter of ["c", "a", "t"]) {
+      await act(async () => {
+        fireEvent.keyDown(window, { key: letter });
+        await Promise.resolve();
+      });
+    }
+
+    // Click Next Word
+    fireEvent.click(screen.getByText(/Next Word/));
+
+    // Should now be on word 2 ("dog")
+    expect(screen.getByText("Word 2")).toBeInTheDocument();
+
+    globalThis.setTimeout = originalSetTimeout;
+  });
 });

@@ -21,15 +21,18 @@ MacQuest guides kids through 12 progressive typing levels with a space-themed UI
 11. **Number Row** - 1 through 0
 12. **Full Keyboard Challenge** - Random selection from all keys
 
-After level 12, the game wraps back to level 1 with shuffled letters.
+**Spelling Words** - 100 age-appropriate words to spell letter-by-letter, with the full word displayed above the target letter and completed letters highlighted in green.
 
 ## Key Features
 
-- **Points-Based Scoring** - +100 per correct key, -100 per wrong key (floor at 0), with random bonus for perfect levels
-- **Progress Persistence** - localStorage saves level, score, and progress so kids can pick up where they left off
+- **Two Game Modes** - Practice Typing (12 progressive keyboard levels) and Spelling Words (100 words), both accessible from the home screen
+- **Victory Screens** - Completing all 12 typing levels or all 100 spelling words shows a celebratory victory screen with final score
+- **Points-Based Scoring** - +100 per correct key, -100 per wrong key (floor at 0), with random bonus for perfect levels/words
+- **Progress Persistence** - localStorage saves level, score, mode, and progress so kids can pick up where they left off
 - **Mac Shield** - Intercepts CMD+Q, CMD+W, CMD+R and other system shortcuts so kids can't accidentally close the browser
-- **Pre-recorded Voice Audio** - 60+ ElevenLabs MP3s for encouragement phrases, with Web Speech API fallback
-- **AI-Generated Praise** - Vercel AI SDK generates unique celebration messages via Claude
+- **Spelling Audio System** - 271 ElevenLabs clips for spelling mode: "Spell the word cat" prompts, individual letter sounds (A-Z, 0-9, special chars), word pronunciations, and 30 excited affirmations for word completion
+- **Pre-recorded Voice Audio** - 62 ElevenLabs MP3s for typing mode encouragement and gentle corrections, with Web Speech API fallback
+- **AI-Generated Praise** - Vercel AI SDK generates unique celebration messages via Claude (typing mode)
 - **Particle Explosions** - Framer Motion animations on every correct keypress
 - **Space Glass UI** - Frosted glass panels, rainbow gradients, animated star background
 - **SVG Keyboard** - Accurate MacBook Pro layout with rainbow glow on the target key
@@ -70,22 +73,32 @@ src/
   components/
     KeyboardEngine.tsx    # Main game loop and state management
     StarshipKeyboard.tsx  # SVG MacBook keyboard with glow effects
-    WelcomeScreen.tsx     # Landing screen with animated start button
+    WelcomeScreen.tsx     # Landing screen with mode selection (typing/spelling)
     ParticleExplosion.tsx # Confetti/particle effects
     SpaceBackground.tsx   # Animated starfield
   hooks/
     useMacShield.ts       # Blocks dangerous macOS shortcuts
     useGameKeyboard.ts    # Key event handling for gameplay
-    useSpeech.ts          # Audio playback with synthesis fallback
+    useSpeech.ts          # Audio playback, sequencing, and synthesis fallback
   lib/
     game-state.ts         # Reducer-based game state and level definitions
     save-state.ts         # localStorage persistence for progress
-    phrases.ts            # Encouragement phrase pools
+    phrases.ts            # Typing mode encouragement phrase pools
+    spelling-audio.ts     # Spelling mode audio path helpers
+    words.ts              # 100 spelling words in 5 tiers
     keyboard-layout.ts    # MacBook key positions and metadata
+scripts/
+  generate-audio.mjs      # ElevenLabs batch generator for typing mode clips
+  generate-spelling-audio.mjs  # ElevenLabs batch generator for spelling mode clips
 public/
   audio/
-    positive/             # 37 ElevenLabs celebration clips
-    wrong/                # 25 ElevenLabs gentle correction clips
+    positive/             # 37 typing mode celebration clips
+    wrong/                # 25 typing mode gentle correction clips
+    spelling-positive/    # 30 excited spelling affirmations
+    spelling-wrong/       # "Try Again" clip for spelling wrong keys
+    letters/              # 40 letter/number/symbol pronunciation clips
+    spell-word/           # 100 "Spell the word {word}" prompts
+    words/                # 100 individual word pronunciations
 ```
 
 ## License

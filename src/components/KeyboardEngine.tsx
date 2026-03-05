@@ -14,6 +14,13 @@ import { WelcomeScreen } from "./WelcomeScreen";
 import { SpaceBackground } from "./SpaceBackground";
 import { generatePhrase } from "@/app/actions/generate-phrase";
 import { getRandomWrongPhrase } from "@/lib/phrases";
+import {
+  getRandomSpellingPositive,
+  getSpellingWrongAudio,
+  getLetterAudio,
+  getSpellWordAudio,
+  getWordAudio,
+} from "@/lib/spelling-audio";
 
 export function KeyboardEngine() {
   const [state, dispatch] = useReducer(gameReducer, undefined, getInitialState);
@@ -22,7 +29,8 @@ export function KeyboardEngine() {
   const [savedGame, setSavedGame] = useState<SaveState | null>(() => loadProgress());
   const celebrationTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const wrongTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const { speak } = useSpeech();
+  const { speak, speakSequence } = useSpeech();
+  const lastSpellingWord = useRef<string>("");
 
   useMacShield();
 
@@ -38,30 +46,71 @@ export function KeyboardEngine() {
     }
   }, [phase, mode, currentLevel, currentLetterIndex, score, perfectLevels, wrongCountThisLevel, spellingWordIndex]);
 
+  // Play "Spell the word {word}" when a new spelling word begins
+  useEffect(() => {
+    if (mode === "spelling" && phase === "playing" && state.currentWord && state.currentWord !== lastSpellingWord.current) {
+      lastSpellingWord.current = state.currentWord;
+      // Small delay so the UI renders first
+      const timer = setTimeout(() => {
+        speak("", getSpellWordAudio(state.currentWord));
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [mode, phase, state.currentWord, speak]);
+
   const handleCorrect = useCallback(() => {
     setPressedKey(state.targetLetter);
     setExplosionId((prev) => prev + 1);
     dispatch({ type: "CORRECT_KEY" });
 
-    generatePhrase().then((result) => {
-      dispatch({ type: "SET_CELEBRATION_MESSAGE", message: result.text });
-      speak(result.text, result.audioFile);
-    });
+    const isSpelling = state.mode === "spelling";
+    const isLastLetter = state.currentLetterIndex === state.letters.length - 1;
 
-    celebrationTimer.current = setTimeout(() => {
-      setPressedKey(null);
-      dispatch({ type: "FINISH_CELEBRATION" });
-    }, 2500);
-  }, [state.targetLetter, speak]);
+    if (isSpelling) {
+      if (isLastLetter) {
+        // Word complete: say the word → positive affirmation
+        const positive = getRandomSpellingPositive();
+        const wordAudio = getWordAudio(state.currentWord);
+        speakSequence([wordAudio, positive.audioFile]);
+        dispatch({ type: "SET_CELEBRATION_MESSAGE", message: `${state.currentWord.toUpperCase()}!` });
+        celebrationTimer.current = setTimeout(() => {
+          setPressedKey(null);
+          dispatch({ type: "FINISH_CELEBRATION" });
+        }, 3500);
+      } else {
+        // Individual letter: say the letter name
+        speak("", getLetterAudio(state.targetLetter));
+        celebrationTimer.current = setTimeout(() => {
+          setPressedKey(null);
+          dispatch({ type: "FINISH_CELEBRATION" });
+        }, 1200);
+      }
+    } else {
+      // Keys mode: AI-generated phrase
+      generatePhrase().then((result) => {
+        dispatch({ type: "SET_CELEBRATION_MESSAGE", message: result.text });
+        speak(result.text, result.audioFile);
+      });
+      celebrationTimer.current = setTimeout(() => {
+        setPressedKey(null);
+        dispatch({ type: "FINISH_CELEBRATION" });
+      }, 2500);
+    }
+  }, [state.targetLetter, state.mode, state.currentLetterIndex, state.letters.length, state.currentWord, speak, speakSequence]);
 
   const handleWrong = useCallback(() => {
     if (wrongTimer.current) clearTimeout(wrongTimer.current);
 
-    const result = getRandomWrongPhrase();
-    dispatch({ type: "WRONG_KEY", message: result.text });
-    speak(result.text, result.audioFile);
+    if (state.mode === "spelling") {
+      dispatch({ type: "WRONG_KEY", message: "Try Again!" });
+      speak("Try Again!", getSpellingWrongAudio());
+    } else {
+      const result = getRandomWrongPhrase();
+      dispatch({ type: "WRONG_KEY", message: result.text });
+      speak(result.text, result.audioFile);
+    }
     wrongTimer.current = setTimeout(() => dispatch({ type: "CLEAR_WRONG" }), 2500);
-  }, [speak]);
+  }, [speak, state.mode]);
 
   useGameKeyboard({
     targetLetter: state.targetLetter,
@@ -367,19 +416,19 @@ export function KeyboardEngine() {
   // Spelling mode: word display above the target letter
   const wordDisplay = state.mode === "spelling" && state.currentWord ? (
     <motion.div
-      className="glass-panel px-6 py-3 mb-2"
+      className="glass-panel px-8 py-4"
       initial={{ y: -10, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
     >
-      <div className="flex items-center justify-center gap-1.5">
+      <div className="flex items-center justify-center gap-2 md:gap-3">
         {state.currentWord.toUpperCase().split("").map((letter, i) => (
           <span
             key={i}
-            className="text-4xl md:text-5xl font-bold transition-all duration-200"
+            className="text-5xl md:text-7xl font-bold transition-all duration-200"
             style={{
               color:
                 i < state.currentLetterIndex
-                  ? "rgba(52, 211, 153, 0.5)" // completed — green/dim
+                  ? "rgba(52, 211, 153, 0.6)" // completed — green
                   : i === state.currentLetterIndex
                     ? undefined // current — gradient below
                     : "rgba(255, 255, 255, 0.2)", // upcoming — dim
@@ -388,7 +437,7 @@ export function KeyboardEngine() {
                     background: "linear-gradient(135deg, #fce7f3, #e9d5ff, #c7d2fe)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
-                    filter: "drop-shadow(0 0 12px rgba(139, 92, 246, 0.5))",
+                    filter: "drop-shadow(0 0 16px rgba(139, 92, 246, 0.6))",
                   }
                 : {}),
             }}
@@ -403,8 +452,8 @@ export function KeyboardEngine() {
   return (
     <>
       <SpaceBackground />
-      <div className="relative flex flex-col items-center justify-center min-h-screen gap-5 px-4 py-6 z-10">
-        {/* Header bar */}
+      <div className="relative flex flex-col items-center min-h-screen gap-4 px-4 pt-4 pb-4 z-10">
+        {/* Header bar — pinned near top */}
         <div className="w-full max-w-2xl">
           <div className="glass-panel px-5 py-3">
             <div className="flex items-center justify-between mb-2">
@@ -467,6 +516,9 @@ export function KeyboardEngine() {
             </div>
           </div>
         </div>
+
+        {/* Flexible spacer to center content vertically */}
+        <div className="flex-1" />
 
         {/* Word display for spelling mode */}
         {wordDisplay}
@@ -555,11 +607,18 @@ export function KeyboardEngine() {
 
           {/* Hint text (only when playing and no other message) */}
           {state.phase === "playing" && !state.wrongKey && !state.celebrationMessage && (
-            <p className="text-base text-white/30 font-medium text-center">
+            <p className={`font-medium text-center ${state.mode === "spelling" ? "text-lg md:text-xl text-white/35" : "text-base text-white/30"}`}>
               {state.mode === "spelling" ? (
                 <>
                   Spell:{" "}
-                  <span className="font-bold text-white/40">
+                  <span
+                    className="font-bold text-xl md:text-2xl"
+                    style={{
+                      background: "linear-gradient(135deg, #fbbf24, #f97316)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                    }}
+                  >
                     {state.currentWord.toUpperCase()}
                   </span>
                   {" — Press the "}
@@ -582,7 +641,10 @@ export function KeyboardEngine() {
           )}
         </div>
 
-        {/* Keyboard */}
+        {/* Flexible spacer to push keyboard down */}
+        <div className="flex-1" />
+
+        {/* Keyboard — pinned near bottom */}
         <StarshipKeyboard
           targetLetter={state.targetLetter}
           pressedKey={state.phase === "celebrating" ? pressedKey : null}

@@ -39,9 +39,11 @@ describe("useSpeech", () => {
     } as unknown as typeof Audio;
   }
 
-  it("returns a speak function", () => {
+  it("returns speak, speakSequence, and stopCurrent functions", () => {
     const { result } = renderHook(() => useSpeech());
     expect(typeof result.current.speak).toBe("function");
+    expect(typeof result.current.speakSequence).toBe("function");
+    expect(typeof result.current.stopCurrent).toBe("function");
   });
 
   describe("audio file playback", () => {
@@ -348,6 +350,70 @@ describe("useSpeech", () => {
 
       const utterance = mockSpeak.mock.calls[0][0];
       expect(utterance.voice).toBeNull();
+    });
+  });
+
+  describe("speakSequence", () => {
+    it("plays multiple audio files in order", async () => {
+      const playCalls: string[] = [];
+
+      globalThis.Audio = class extends EventTarget {
+        volume = 1;
+        src = "";
+        onended: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        pause = vi.fn();
+        constructor(src?: string) {
+          super();
+          this.src = src || "";
+          playCalls.push(this.src);
+        }
+        play = vi.fn().mockImplementation(() => {
+          // Simulate immediate end
+          setTimeout(() => this.onended?.(), 0);
+          return Promise.resolve();
+        });
+      } as unknown as typeof Audio;
+
+      const { result } = renderHook(() => useSpeech());
+
+      await act(async () => {
+        result.current.speakSequence(["/audio/a.mp3", "/audio/b.mp3"]);
+        // Let both clips "play"
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      });
+
+      expect(playCalls).toEqual(["/audio/a.mp3", "/audio/b.mp3"]);
+    });
+
+    it("stops previous audio when calling speakSequence", () => {
+      const firstPause = vi.fn();
+      let callCount = 0;
+
+      globalThis.Audio = class extends EventTarget {
+        volume = 1;
+        pause: ReturnType<typeof vi.fn>;
+        onended: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        constructor() {
+          super();
+          callCount++;
+          this.pause = callCount === 1 ? firstPause : vi.fn();
+        }
+        play = vi.fn().mockResolvedValue(undefined);
+      } as unknown as typeof Audio;
+
+      const { result } = renderHook(() => useSpeech());
+
+      act(() => {
+        result.current.speak("First", "/audio/first.mp3");
+      });
+
+      act(() => {
+        result.current.speakSequence(["/audio/a.mp3"]);
+      });
+
+      expect(firstPause).toHaveBeenCalled();
     });
   });
 });
