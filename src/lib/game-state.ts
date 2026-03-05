@@ -34,7 +34,8 @@ export type GameAction =
   | { type: "NEXT_LEVEL" }
   | { type: "RESUME_GAME"; save: SaveState }
   | { type: "START_SPELLING" }
-  | { type: "NEXT_WORD" };
+  | { type: "NEXT_WORD" }
+  | { type: "RETURN_HOME" };
 
 // All keyboard keys for the final challenge level
 const ALL_KEYS = [
@@ -336,6 +337,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         currentWord: word,
         spellingWordIndex: nextWordIndex,
       };
+    }
+
+    case "RETURN_HOME": {
+      return getInitialState();
     }
 
     default:

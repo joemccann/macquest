@@ -3,26 +3,9 @@ import { renderHook, act } from "@testing-library/react";
 import { useSpeech } from "@/hooks/useSpeech";
 
 describe("useSpeech", () => {
-  let mockCancel: ReturnType<typeof vi.fn>;
-  let mockSpeak: ReturnType<typeof vi.fn>;
-  let mockGetVoices: ReturnType<typeof vi.fn>;
   let originalAudio: typeof Audio;
 
   beforeEach(() => {
-    // Reset speechSynthesis fns (already writable from setup)
-    mockCancel = vi.fn();
-    mockSpeak = vi.fn();
-    mockGetVoices = vi.fn().mockReturnValue([]);
-
-    (window as unknown as Record<string, unknown>).speechSynthesis = {
-      cancel: mockCancel,
-      speak: mockSpeak,
-      getVoices: mockGetVoices,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    };
-
-    // Save original Audio for restoration
     originalAudio = globalThis.Audio;
   });
 
@@ -98,9 +81,11 @@ describe("useSpeech", () => {
       expect(capturedVolume).toBe(1);
     });
 
-    it("does not use speech synthesis when audio file is provided and plays successfully", () => {
+    it("does nothing when no audio file is provided", () => {
+      const mockPlay = vi.fn().mockResolvedValue(undefined);
+
       mockAudioConstructor({
-        play: vi.fn().mockResolvedValue(undefined),
+        play: mockPlay,
         pause: vi.fn(),
         volume: 1,
       });
@@ -108,41 +93,30 @@ describe("useSpeech", () => {
       const { result } = renderHook(() => useSpeech());
 
       act(() => {
-        result.current.speak("Hello", "/audio/hello.mp3");
+        result.current.speak("Hello");
       });
 
-      expect(mockSpeak).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("speech synthesis fallback", () => {
-    it("uses speech synthesis when no audio file is provided", () => {
-      const { result } = renderHook(() => useSpeech());
-
-      act(() => {
-        result.current.speak("Hello world");
-      });
-
-      expect(mockCancel).toHaveBeenCalled();
-      expect(mockSpeak).toHaveBeenCalled();
-
-      const utterance = mockSpeak.mock.calls[0][0];
-      expect(utterance.text).toBe("Hello world");
-      expect(utterance.rate).toBe(0.9);
-      expect(utterance.pitch).toBe(1.2);
-      expect(utterance.volume).toBe(1);
+      expect(mockPlay).not.toHaveBeenCalled();
     });
 
-    it("cancels any existing synthesis before speaking", () => {
-      const { result } = renderHook(() => useSpeech());
+    it("silently handles audio play failure", async () => {
+      const failingPlay = vi.fn().mockRejectedValue(new Error("Playback failed"));
 
-      act(() => {
-        result.current.speak("First");
+      mockAudioConstructor({
+        play: failingPlay,
+        pause: vi.fn(),
+        volume: 1,
       });
 
-      const cancelOrder = mockCancel.mock.invocationCallOrder[0];
-      const speakOrder = mockSpeak.mock.invocationCallOrder[0];
-      expect(cancelOrder).toBeLessThan(speakOrder);
+      const { result } = renderHook(() => useSpeech());
+
+      // Should not throw
+      await act(async () => {
+        result.current.speak("Fallback text", "/audio/broken.mp3");
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      expect(failingPlay).toHaveBeenCalled();
     });
   });
 
@@ -182,175 +156,6 @@ describe("useSpeech", () => {
       expect(firstPause).toHaveBeenCalled();
       expect(secondPlay).toHaveBeenCalled();
     });
-
-    it("pauses previous audio before falling back to synthesis", () => {
-      const prevPause = vi.fn();
-
-      globalThis.Audio = class extends EventTarget {
-        volume = 1;
-        play = vi.fn().mockResolvedValue(undefined);
-        pause = prevPause;
-      } as unknown as typeof Audio;
-
-      const { result } = renderHook(() => useSpeech());
-
-      act(() => {
-        result.current.speak("Audio", "/audio/file.mp3");
-      });
-
-      act(() => {
-        result.current.speak("Synthesis only");
-      });
-
-      expect(prevPause).toHaveBeenCalled();
-      expect(mockSpeak).toHaveBeenCalled();
-    });
-  });
-
-  describe("audio play failure fallback", () => {
-    it("falls back to speech synthesis when audio play fails", async () => {
-      const playError = new Error("Playback failed");
-      const failingPlay = vi.fn().mockRejectedValue(playError);
-
-      mockAudioConstructor({
-        play: failingPlay,
-        pause: vi.fn(),
-        volume: 1,
-      });
-
-      const { result } = renderHook(() => useSpeech());
-
-      await act(async () => {
-        result.current.speak("Fallback text", "/audio/broken.mp3");
-        // Allow the rejected promise to resolve
-        await new Promise((resolve) => setTimeout(resolve, 0));
-      });
-
-      expect(failingPlay).toHaveBeenCalled();
-      expect(mockCancel).toHaveBeenCalled();
-      expect(mockSpeak).toHaveBeenCalled();
-    });
-  });
-
-  describe("voice selection", () => {
-    it("selects a preferred English voice with 'Enhanced' in the name", () => {
-      const enhancedVoice = {
-        name: "English Enhanced",
-        lang: "en-US",
-      } as SpeechSynthesisVoice;
-      const regularVoice = {
-        name: "English Regular",
-        lang: "en-US",
-      } as SpeechSynthesisVoice;
-      mockGetVoices.mockReturnValue([regularVoice, enhancedVoice]);
-
-      const { result } = renderHook(() => useSpeech());
-
-      act(() => {
-        result.current.speak("Hello");
-      });
-
-      const utterance = mockSpeak.mock.calls[0][0];
-      expect(utterance.voice).toBe(enhancedVoice);
-    });
-
-    it("selects a preferred English voice with 'Premium' in the name", () => {
-      const premiumVoice = {
-        name: "Premium English",
-        lang: "en-GB",
-      } as SpeechSynthesisVoice;
-      const regularVoice = {
-        name: "Regular",
-        lang: "en-US",
-      } as SpeechSynthesisVoice;
-      mockGetVoices.mockReturnValue([regularVoice, premiumVoice]);
-
-      const { result } = renderHook(() => useSpeech());
-
-      act(() => {
-        result.current.speak("Hello");
-      });
-
-      const utterance = mockSpeak.mock.calls[0][0];
-      expect(utterance.voice).toBe(premiumVoice);
-    });
-
-    it("selects a preferred English voice with 'Samantha' in the name", () => {
-      const samanthaVoice = {
-        name: "Samantha",
-        lang: "en-US",
-      } as SpeechSynthesisVoice;
-      const otherVoice = {
-        name: "Alex",
-        lang: "en-US",
-      } as SpeechSynthesisVoice;
-      mockGetVoices.mockReturnValue([otherVoice, samanthaVoice]);
-
-      const { result } = renderHook(() => useSpeech());
-
-      act(() => {
-        result.current.speak("Hello");
-      });
-
-      const utterance = mockSpeak.mock.calls[0][0];
-      expect(utterance.voice).toBe(samanthaVoice);
-    });
-
-    it("does not set a voice when no preferred English voice is found", () => {
-      const frenchVoice = {
-        name: "French Enhanced",
-        lang: "fr-FR",
-      } as SpeechSynthesisVoice;
-      const plainEnglish = {
-        name: "Alex",
-        lang: "en-US",
-      } as SpeechSynthesisVoice;
-      mockGetVoices.mockReturnValue([frenchVoice, plainEnglish]);
-
-      const { result } = renderHook(() => useSpeech());
-
-      act(() => {
-        result.current.speak("Hello");
-      });
-
-      const utterance = mockSpeak.mock.calls[0][0];
-      expect(utterance.voice).toBeNull();
-    });
-
-    it("filters out non-English voices when looking for preferred", () => {
-      const frenchEnhanced = {
-        name: "French Enhanced",
-        lang: "fr-FR",
-      } as SpeechSynthesisVoice;
-      const regularEnglish = {
-        name: "Regular",
-        lang: "en-US",
-      } as SpeechSynthesisVoice;
-      mockGetVoices.mockReturnValue([frenchEnhanced, regularEnglish]);
-
-      const { result } = renderHook(() => useSpeech());
-
-      act(() => {
-        result.current.speak("Hello");
-      });
-
-      const utterance = mockSpeak.mock.calls[0][0];
-      // "French Enhanced" has "Enhanced" but is not English, so should not be selected
-      expect(utterance.voice).toBeNull();
-    });
-
-    it("does not set voice when no voices are available", () => {
-      mockGetVoices.mockReturnValue([]);
-
-      const { result } = renderHook(() => useSpeech());
-
-      act(() => {
-        result.current.speak("Hello");
-      });
-
-      const utterance = mockSpeak.mock.calls[0][0];
-      expect(utterance.voice).toBeNull();
-    });
   });
 
   describe("speakSequence", () => {
@@ -369,7 +174,6 @@ describe("useSpeech", () => {
           playCalls.push(this.src);
         }
         play = vi.fn().mockImplementation(() => {
-          // Simulate immediate end
           setTimeout(() => this.onended?.(), 0);
           return Promise.resolve();
         });
@@ -379,7 +183,6 @@ describe("useSpeech", () => {
 
       await act(async () => {
         result.current.speakSequence(["/audio/a.mp3", "/audio/b.mp3"]);
-        // Let both clips "play"
         await new Promise((resolve) => setTimeout(resolve, 50));
       });
 

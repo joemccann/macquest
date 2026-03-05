@@ -31,7 +31,7 @@ MacQuest guides kids through 12 progressive typing levels with a space-themed UI
 - **Progress Persistence** - localStorage saves level, score, mode, and progress so kids can pick up where they left off
 - **Mac Shield** - Intercepts CMD+Q, CMD+W, CMD+R and other system shortcuts so kids can't accidentally close the browser
 - **Spelling Audio System** - 271 ElevenLabs clips for spelling mode: "Spell the word cat" prompts, individual letter sounds (A-Z, 0-9, special chars), word pronunciations, and 30 excited affirmations for word completion
-- **Pre-recorded Voice Audio** - 62 ElevenLabs MP3s for typing mode encouragement and gentle corrections, with Web Speech API fallback
+- **Pre-recorded Voice Audio** - 62 ElevenLabs MP3s for typing mode encouragement and gentle corrections
 - **AI-Generated Praise** - Vercel AI SDK generates unique celebration messages via Claude (typing mode)
 - **Particle Explosions** - Framer Motion animations on every correct keypress
 - **Space Glass UI** - Frosted glass panels, rainbow gradients, animated star background
@@ -79,7 +79,7 @@ src/
   hooks/
     useMacShield.ts       # Blocks dangerous macOS shortcuts
     useGameKeyboard.ts    # Key event handling for gameplay
-    useSpeech.ts          # Audio playback, sequencing, and synthesis fallback
+    useSpeech.ts          # Audio playback and sequencing
   lib/
     game-state.ts         # Reducer-based game state and level definitions
     save-state.ts         # localStorage persistence for progress

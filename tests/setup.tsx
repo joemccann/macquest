@@ -6,36 +6,6 @@ afterEach(() => {
   cleanup();
 });
 
-// Mock SpeechSynthesisUtterance (not provided by jsdom)
-class MockSpeechSynthesisUtterance {
-  text: string;
-  rate = 1;
-  pitch = 1;
-  volume = 1;
-  voice: SpeechSynthesisVoice | null = null;
-  lang = "";
-  onend: (() => void) | null = null;
-  onerror: (() => void) | null = null;
-
-  constructor(text?: string) {
-    this.text = text || "";
-  }
-}
-(globalThis as Record<string, unknown>).SpeechSynthesisUtterance =
-  MockSpeechSynthesisUtterance;
-
-// Mock window.speechSynthesis
-Object.defineProperty(window, "speechSynthesis", {
-  value: {
-    cancel: vi.fn(),
-    speak: vi.fn(),
-    getVoices: vi.fn(() => []),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-  },
-  writable: true,
-});
-
 // Mock HTMLMediaElement.play
 Object.defineProperty(HTMLMediaElement.prototype, "play", {
   value: vi.fn(() => Promise.resolve()),

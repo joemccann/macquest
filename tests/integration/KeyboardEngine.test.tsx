@@ -314,6 +314,22 @@ describe("KeyboardEngine", () => {
     globalThis.setTimeout = originalSetTimeout;
   });
 
+  it("shows Home button during play and returns to welcome when clicked", () => {
+    render(<KeyboardEngine />);
+    fireEvent.click(screen.getByText(/Practice Typing/));
+
+    // Home button should be visible
+    const homeButton = screen.getByText("Home");
+    expect(homeButton).toBeInTheDocument();
+
+    // Click it
+    fireEvent.click(homeButton);
+
+    // Should return to welcome screen
+    expect(screen.getByText("MacQuest")).toBeInTheDocument();
+    expect(screen.getByText(/Practice Typing/)).toBeInTheDocument();
+  });
+
   it("enters spelling mode when clicking Spelling Words from welcome", () => {
     render(<KeyboardEngine />);
     fireEvent.click(screen.getByText(/Spelling Words/));

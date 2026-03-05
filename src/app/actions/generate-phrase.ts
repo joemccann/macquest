@@ -81,7 +81,7 @@ export async function generatePhrase(): Promise<PhraseResult> {
     clearTimeout(timeout);
     const trimmed = text.trim();
     if (trimmed) {
-      // AI-generated phrase — no pre-recorded audio, will use speech synthesis fallback
+      // AI-generated phrase — no pre-recorded audio
       return { text: trimmed };
     }
 

@@ -545,6 +545,37 @@ describe("gameReducer", () => {
     });
   });
 
+  describe("RETURN_HOME", () => {
+    it("resets to initial welcome state from playing", () => {
+      const state = gameReducer(
+        createPlayingState({ phase: "playing", score: 5000, currentLevel: 5 }),
+        { type: "RETURN_HOME" }
+      );
+      expect(state.phase).toBe("welcome");
+      expect(state.score).toBe(0);
+      expect(state.currentLevel).toBe(0);
+      expect(state.mode).toBe("keys");
+    });
+
+    it("resets to initial welcome state from level-complete", () => {
+      const state = gameReducer(
+        createPlayingState({ phase: "level-complete", mode: "spelling", spellingWordIndex: 10 }),
+        { type: "RETURN_HOME" }
+      );
+      expect(state.phase).toBe("welcome");
+      expect(state.spellingWordIndex).toBe(0);
+    });
+
+    it("resets to initial welcome state from victory", () => {
+      const state = gameReducer(
+        createPlayingState({ phase: "victory", score: 99999 }),
+        { type: "RETURN_HOME" }
+      );
+      expect(state.phase).toBe("welcome");
+      expect(state.score).toBe(0);
+    });
+  });
+
   describe("default / unknown action", () => {
     it("returns state unchanged for unknown action types", () => {
       const state = createPlayingState();

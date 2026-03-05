@@ -353,17 +353,6 @@ describe("useSpeech", () => {
     expect(getByTestId("speech")).toBeInTheDocument();
   });
 
-  it("calls speechSynthesis.speak when no audioFile provided", () => {
-    render(<SpeechTestComponent onSpeak={(s) => { speakFn = s; }} />);
-
-    act(() => {
-      speakFn("Hello world");
-    });
-
-    expect(window.speechSynthesis.cancel).toHaveBeenCalled();
-    expect(window.speechSynthesis.speak).toHaveBeenCalled();
-  });
-
   it("plays audio file when audioFile is provided", () => {
     render(<SpeechTestComponent onSpeak={(s) => { speakFn = s; }} />);
 
@@ -373,6 +362,17 @@ describe("useSpeech", () => {
 
     // HTMLMediaElement.play should have been called (it's mocked in setup)
     expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
+  });
+
+  it("does nothing when no audioFile provided", () => {
+    render(<SpeechTestComponent onSpeak={(s) => { speakFn = s; }} />);
+
+    act(() => {
+      speakFn("Hello world");
+    });
+
+    // No audio should be played
+    expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
   });
 
   it("pauses current audio before playing new one", () => {
@@ -390,93 +390,30 @@ describe("useSpeech", () => {
     expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled();
   });
 
-  it("falls back to synthesis when audio play fails", async () => {
-    // Override play to reject
+  it("silently handles audio play failure", async () => {
     const originalPlay = HTMLMediaElement.prototype.play;
     HTMLMediaElement.prototype.play = vi.fn(() => Promise.reject(new Error("play failed")));
 
     render(<SpeechTestComponent onSpeak={(s) => { speakFn = s; }} />);
 
+    // Should not throw
     await act(async () => {
       speakFn("Fallback test", "/audio/positive/00.mp3");
-      // Wait for the rejected promise to resolve
       await new Promise((resolve) => setTimeout(resolve, 10));
     });
 
-    // Should fall back to speechSynthesis
-    expect(window.speechSynthesis.speak).toHaveBeenCalled();
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
 
-    // Restore
     HTMLMediaElement.prototype.play = originalPlay;
-  });
-
-  it("selects preferred English voice when available", () => {
-    const mockVoices = [
-      { name: "Alex", lang: "en-US" },
-      { name: "Samantha Enhanced", lang: "en-US" },
-      { name: "Pierre", lang: "fr-FR" },
-    ] as SpeechSynthesisVoice[];
-
-    const originalGetVoices = window.speechSynthesis.getVoices;
-    (window.speechSynthesis.getVoices as ReturnType<typeof vi.fn>) = vi.fn(() => mockVoices);
-
-    render(<SpeechTestComponent onSpeak={(s) => { speakFn = s; }} />);
-
-    act(() => {
-      speakFn("Voice test");
-    });
-
-    expect(window.speechSynthesis.speak).toHaveBeenCalled();
-
-    window.speechSynthesis.getVoices = originalGetVoices;
-  });
-
-  it("uses first English voice when no preferred voice found", () => {
-    const mockVoices = [
-      { name: "Alex", lang: "en-US" },
-      { name: "Tom", lang: "en-GB" },
-      { name: "Pierre", lang: "fr-FR" },
-    ] as SpeechSynthesisVoice[];
-
-    const originalGetVoices = window.speechSynthesis.getVoices;
-    (window.speechSynthesis.getVoices as ReturnType<typeof vi.fn>) = vi.fn(() => mockVoices);
-
-    render(<SpeechTestComponent onSpeak={(s) => { speakFn = s; }} />);
-
-    act(() => {
-      speakFn("No preferred voice test");
-    });
-
-    expect(window.speechSynthesis.speak).toHaveBeenCalled();
-
-    window.speechSynthesis.getVoices = originalGetVoices;
-  });
-
-  it("handles empty voice list gracefully", () => {
-    const originalGetVoices = window.speechSynthesis.getVoices;
-    (window.speechSynthesis.getVoices as ReturnType<typeof vi.fn>) = vi.fn(() => []);
-
-    render(<SpeechTestComponent onSpeak={(s) => { speakFn = s; }} />);
-
-    act(() => {
-      speakFn("No voices available");
-    });
-
-    expect(window.speechSynthesis.speak).toHaveBeenCalled();
-
-    window.speechSynthesis.getVoices = originalGetVoices;
   });
 
   it("does not pause audio if no current audio is playing", () => {
     render(<SpeechTestComponent onSpeak={(s) => { speakFn = s; }} />);
 
-    // First speak with audioFile - no previous audio to pause
     act(() => {
       speakFn("First call", "/audio/positive/00.mp3");
     });
 
-    // pause should NOT have been called since there was no previous audio
-    // (pause is on prototype, but currentAudio ref was null before this)
     expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
   });
 });

@@ -10,7 +10,7 @@ A Next.js 15 (App Router) typing app for a 5-year-old on a MacBook Pro. Turns a 
 - **Animation**: Framer Motion (particle explosions on keypress)
 - **UI Components**: Shadcn/UI (Progress, Card)
 - **AI**: Vercel AI SDK for success phrases (typing mode)
-- **Audio**: ElevenLabs pre-recorded MP3s (330+ clips), Web Speech API fallback
+- **Audio**: ElevenLabs pre-recorded MP3s (330+ clips)
 - **Deploy**: Vercel (Retina-optimized images)
 
 ## Key Design Decisions

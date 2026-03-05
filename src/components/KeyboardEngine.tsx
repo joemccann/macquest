@@ -29,7 +29,7 @@ export function KeyboardEngine() {
   const [savedGame, setSavedGame] = useState<SaveState | null>(() => loadProgress());
   const celebrationTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const wrongTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const { speak, speakSequence } = useSpeech();
+  const { speak, speakSequence, stopCurrent } = useSpeech();
   const lastSpellingWord = useRef<string>("");
 
   useMacShield();
@@ -144,6 +144,15 @@ export function KeyboardEngine() {
     dispatch({ type: "NEXT_WORD" });
   }, []);
 
+  const handleReturnHome = useCallback(() => {
+    stopCurrent();
+    if (celebrationTimer.current) clearTimeout(celebrationTimer.current);
+    if (wrongTimer.current) clearTimeout(wrongTimer.current);
+    setSavedGame(loadProgress());
+    lastSpellingWord.current = "";
+    dispatch({ type: "RETURN_HOME" });
+  }, [stopCurrent]);
+
   const progress =
     state.totalLetters > 0
       ? (state.currentLetterIndex / state.totalLetters) * 100
@@ -171,6 +180,18 @@ export function KeyboardEngine() {
       <>
         <SpaceBackground />
         <div className="flex flex-col items-center justify-center min-h-screen gap-8 px-4 relative z-10">
+          {/* Home button */}
+          <motion.button
+            onClick={handleReturnHome}
+            className="absolute top-4 left-4 cursor-pointer z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
+            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(8px)" }}
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
+          >
+            <span className="text-base">🏠</span>
+            <span>Home</span>
+          </motion.button>
+
           <motion.div
             className="text-8xl"
             initial={{ scale: 0, rotate: -180 }}
@@ -311,6 +332,18 @@ export function KeyboardEngine() {
       <>
         <SpaceBackground />
         <div className="flex flex-col items-center justify-center min-h-screen gap-8 px-4 relative z-10">
+          {/* Home button */}
+          <motion.button
+            onClick={handleReturnHome}
+            className="absolute top-4 left-4 cursor-pointer z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
+            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(8px)" }}
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
+          >
+            <span className="text-base">🏠</span>
+            <span>Home</span>
+          </motion.button>
+
           {/* Celebration emoji */}
           <motion.div
             className="text-8xl"
@@ -453,6 +486,25 @@ export function KeyboardEngine() {
     <>
       <SpaceBackground />
       <div className="relative flex flex-col items-center min-h-screen gap-4 px-4 pt-4 pb-4 z-10">
+        {/* Home button — top-left corner */}
+        <motion.button
+          onClick={handleReturnHome}
+          className="absolute top-4 left-4 cursor-pointer z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
+          style={{
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            backdropFilter: "blur(8px)",
+          }}
+          whileHover={{ scale: 1.06 }}
+          whileTap={{ scale: 0.94 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <span className="text-base">🏠</span>
+          <span>Home</span>
+        </motion.button>
+
         {/* Header bar — pinned near top */}
         <div className="w-full max-w-2xl">
           <div className="glass-panel px-5 py-3">

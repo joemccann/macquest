@@ -3,10 +3,9 @@
 import { useCallback, useRef } from "react";
 
 /**
- * Plays pre-recorded ElevenLabs MP3 files for phrases.
- * Falls back to Web Speech API for dynamically generated phrases.
+ * Plays pre-recorded ElevenLabs MP3 files.
  *
- * `speak()` — play a single clip (or TTS fallback)
+ * `speak()` — play a single clip
  * `speakSequence()` — play multiple clips back-to-back
  */
 export function useSpeech() {
@@ -35,22 +34,16 @@ export function useSpeech() {
     });
   }, []);
 
-  const speak = useCallback((text: string, audioFile?: string) => {
+  const speak = useCallback((_text: string, audioFile?: string) => {
     if (typeof window === "undefined") return;
 
     stopCurrent();
 
-    // If we have a pre-recorded file, use it (instant, high quality)
     if (audioFile) {
       playFile(audioFile).catch(() => {
-        // If audio fails, fall back to speech synthesis
-        speakWithSynthesis(text);
+        // Silently ignore playback failures
       });
-      return;
     }
-
-    // Fallback: Web Speech API for AI-generated phrases
-    speakWithSynthesis(text);
   }, [stopCurrent, playFile]);
 
   /** Play multiple audio files in sequence (stops if a new speak/sequence call occurs) */
@@ -75,26 +68,4 @@ export function useSpeech() {
   }, [stopCurrent, playFile]);
 
   return { speak, speakSequence, stopCurrent };
-}
-
-function speakWithSynthesis(text: string) {
-  const synth = window.speechSynthesis;
-  synth.cancel();
-
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 0.9;
-  utterance.pitch = 1.2;
-  utterance.volume = 1;
-
-  const voices = synth.getVoices();
-  const english = voices.filter((v) => v.lang.startsWith("en"));
-  const preferred = english.find(
-    (v) =>
-      v.name.includes("Enhanced") ||
-      v.name.includes("Premium") ||
-      v.name.includes("Samantha")
-  );
-  if (preferred) utterance.voice = preferred;
-
-  synth.speak(utterance);
 }
