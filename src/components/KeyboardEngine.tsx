@@ -106,6 +106,7 @@ export function KeyboardEngine() {
         <SpaceBackground />
         <WelcomeScreen
           onStart={handleStart}
+          onStartSpelling={handleStartSpelling}
           onResume={savedGame ? handleResume : undefined}
           savedLevel={savedGame ? savedGame.currentLevel + 1 : undefined}
           savedScore={savedGame?.score}

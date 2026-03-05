@@ -26,18 +26,19 @@ describe("KeyboardEngine", () => {
   it("shows welcome screen initially", () => {
     render(<KeyboardEngine />);
     expect(screen.getByText("MacQuest")).toBeInTheDocument();
-    expect(screen.getByText("Start Adventure")).toBeInTheDocument();
+    expect(screen.getByText(/Practice Typing/)).toBeInTheDocument();
+    expect(screen.getByText(/Spelling Words/)).toBeInTheDocument();
     expect(screen.getByText("The Typing Adventure")).toBeInTheDocument();
   });
 
-  it("transitions to playing phase after clicking Start Adventure", () => {
+  it("transitions to playing phase after clicking Practice Typing", () => {
     render(<KeyboardEngine />);
 
     // Click the start button
-    fireEvent.click(screen.getByText("Start Adventure"));
+    fireEvent.click(screen.getByText(/Practice Typing/));
 
     // Welcome screen should be gone, playing UI should appear
-    expect(screen.queryByText("Start Adventure")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Practice Typing/)).not.toBeInTheDocument();
     // The first target letter for level 1 is "F"
     // Multiple "F" elements exist (target display, hint, keyboard key), so use getAllByText
     const fElements = screen.getAllByText("F");
@@ -47,7 +48,7 @@ describe("KeyboardEngine", () => {
   it("shows target letter during play", () => {
     render(<KeyboardEngine />);
 
-    fireEvent.click(screen.getByText("Start Adventure"));
+    fireEvent.click(screen.getByText(/Practice Typing/));
 
     // Level 1 starts with "F" as the target letter
     // The target letter is displayed in a large format
@@ -59,7 +60,7 @@ describe("KeyboardEngine", () => {
 
   it("shows level information after starting", () => {
     render(<KeyboardEngine />);
-    fireEvent.click(screen.getByText("Start Adventure"));
+    fireEvent.click(screen.getByText(/Practice Typing/));
 
     // Should show level indicator
     expect(screen.getByText("Level 1")).toBeInTheDocument();
@@ -68,7 +69,7 @@ describe("KeyboardEngine", () => {
 
   it("shows progress counter after starting", () => {
     const { container } = render(<KeyboardEngine />);
-    fireEvent.click(screen.getByText("Start Adventure"));
+    fireEvent.click(screen.getByText(/Practice Typing/));
 
     // The progress counter shows currentLetterIndex / totalLetters
     // "0" conflicts with the keyboard "0" key, so query within the glass-panel header
@@ -81,7 +82,7 @@ describe("KeyboardEngine", () => {
 
   it("shows hint text during playing phase", () => {
     render(<KeyboardEngine />);
-    fireEvent.click(screen.getByText("Start Adventure"));
+    fireEvent.click(screen.getByText(/Practice Typing/));
 
     // Should show the hint
     expect(screen.getByText(/Press the/)).toBeInTheDocument();
@@ -90,7 +91,7 @@ describe("KeyboardEngine", () => {
 
   it("renders the keyboard component during play", () => {
     const { container } = render(<KeyboardEngine />);
-    fireEvent.click(screen.getByText("Start Adventure"));
+    fireEvent.click(screen.getByText(/Practice Typing/));
 
     // StarshipKeyboard should render an SVG
     const svg = container.querySelector("svg");
@@ -99,7 +100,7 @@ describe("KeyboardEngine", () => {
 
   it("transitions to celebrating phase on correct key press", async () => {
     render(<KeyboardEngine />);
-    fireEvent.click(screen.getByText("Start Adventure"));
+    fireEvent.click(screen.getByText(/Practice Typing/));
 
     // Press the correct key (F is the first target)
     fireEvent.keyDown(window, { key: "f" });
@@ -112,7 +113,7 @@ describe("KeyboardEngine", () => {
 
   it("shows wrong key message on incorrect key press", () => {
     render(<KeyboardEngine />);
-    fireEvent.click(screen.getByText("Start Adventure"));
+    fireEvent.click(screen.getByText(/Practice Typing/));
 
     // Press a wrong key (target is F)
     fireEvent.keyDown(window, { key: "a" });
@@ -130,7 +131,7 @@ describe("KeyboardEngine", () => {
 
   it("renders the SpaceBackground in playing phase", () => {
     const { container } = render(<KeyboardEngine />);
-    fireEvent.click(screen.getByText("Start Adventure"));
+    fireEvent.click(screen.getByText(/Practice Typing/));
     const bgWrapper = container.querySelector(".fixed.inset-0");
     expect(bgWrapper).toBeInTheDocument();
   });
@@ -149,7 +150,7 @@ describe("KeyboardEngine", () => {
     globalThis.setTimeout = mockSetTimeout as unknown as typeof setTimeout;
 
     render(<KeyboardEngine />);
-    fireEvent.click(screen.getByText("Start Adventure"));
+    fireEvent.click(screen.getByText(/Practice Typing/));
 
     // Level 0 has 8 letters: F, J, F, J, J, F, F, J
     const letters = ["f", "j", "f", "j", "j", "f", "f", "j"];
@@ -179,7 +180,7 @@ describe("KeyboardEngine", () => {
     globalThis.setTimeout = mockSetTimeout as unknown as typeof setTimeout;
 
     render(<KeyboardEngine />);
-    fireEvent.click(screen.getByText("Start Adventure"));
+    fireEvent.click(screen.getByText(/Practice Typing/));
 
     const letters = ["f", "j", "f", "j", "j", "f", "f", "j"];
     for (const letter of letters) {
@@ -205,7 +206,7 @@ describe("KeyboardEngine", () => {
     const clearTimeoutSpy = vi.spyOn(globalThis, "clearTimeout");
 
     render(<KeyboardEngine />);
-    fireEvent.click(screen.getByText("Start Adventure"));
+    fireEvent.click(screen.getByText(/Practice Typing/));
 
     // Press a wrong key
     fireEvent.keyDown(window, { key: "a" });
@@ -295,7 +296,7 @@ describe("KeyboardEngine", () => {
     globalThis.setTimeout = mockSetTimeout as unknown as typeof setTimeout;
 
     render(<KeyboardEngine />);
-    fireEvent.click(screen.getByText("Start Adventure"));
+    fireEvent.click(screen.getByText(/Practice Typing/));
 
     const letters = ["f", "j", "f", "j", "j", "f", "f", "j"];
     for (const letter of letters) {
@@ -311,5 +312,14 @@ describe("KeyboardEngine", () => {
     ).toBeInTheDocument();
 
     globalThis.setTimeout = originalSetTimeout;
+  });
+
+  it("enters spelling mode when clicking Spelling Words from welcome", () => {
+    render(<KeyboardEngine />);
+    fireEvent.click(screen.getByText(/Spelling Words/));
+
+    // Should be in spelling mode — shows Word 1 and pencil emoji
+    expect(screen.getByText("Word 1")).toBeInTheDocument();
+    expect(screen.queryByText(/Practice Typing/)).not.toBeInTheDocument();
   });
 });

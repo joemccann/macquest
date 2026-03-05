@@ -4,12 +4,13 @@ import { motion } from "framer-motion";
 
 interface WelcomeScreenProps {
   onStart: () => void;
+  onStartSpelling: () => void;
   onResume?: () => void;
   savedLevel?: number;
   savedScore?: number;
 }
 
-export function WelcomeScreen({ onStart, onResume, savedLevel, savedScore }: WelcomeScreenProps) {
+export function WelcomeScreen({ onStart, onStartSpelling, onResume, savedLevel, savedScore }: WelcomeScreenProps) {
   const hasSave = onResume && savedLevel !== undefined;
 
   return (
@@ -125,7 +126,7 @@ export function WelcomeScreen({ onStart, onResume, savedLevel, savedScore }: Wel
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 1.3, type: "spring", stiffness: 180, damping: 12 }}
       >
-        {hasSave ? (
+        {hasSave && (
           <>
             {/* Continue Adventure (primary) */}
             <motion.button
@@ -157,21 +158,11 @@ export function WelcomeScreen({ onStart, onResume, savedLevel, savedScore }: Wel
                 </motion.span>
               </div>
             </motion.button>
-
-            {/* Start Over (ghost button) */}
-            <motion.button
-              onClick={onStart}
-              className="cursor-pointer px-8 py-2.5 rounded-full text-base font-medium text-white/40 hover:text-white/60 transition-colors"
-              style={{
-                border: "1px solid rgba(255,255,255,0.1)",
-              }}
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
-            >
-              Start Over
-            </motion.button>
           </>
-        ) : (
+        )}
+
+        {/* Mode selection buttons — always visible */}
+        <div className="flex items-center gap-4">
           <motion.button
             onClick={onStart}
             className="relative group cursor-pointer"
@@ -179,27 +170,59 @@ export function WelcomeScreen({ onStart, onResume, savedLevel, savedScore }: Wel
             whileTap={{ scale: 0.94 }}
           >
             <div
-              className="absolute -inset-2 rounded-full opacity-60 group-hover:opacity-80 transition-opacity animate-pulse-ring"
+              className="absolute -inset-2 rounded-full opacity-50 group-hover:opacity-70 transition-opacity"
               style={{
                 background: "linear-gradient(135deg, #f472b6, #c084fc, #38bdf8)",
-                filter: "blur(16px)",
+                filter: "blur(14px)",
               }}
             />
             <div
-              className="relative px-14 py-5 rounded-full text-2xl font-bold text-white"
+              className="relative px-10 py-4 rounded-full text-xl font-bold text-white"
               style={{
                 background: "linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #3b82f6 100%)",
                 boxShadow: "0 4px 24px rgba(139, 92, 246, 0.4), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.15)",
               }}
             >
-              <motion.span
-                className="inline-block"
-                animate={{ scale: [1, 1.03, 1] }}
-                transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
-              >
-                Start Adventure
-              </motion.span>
+              <span role="img" aria-label="rocket">🚀</span> Practice Typing
             </div>
+          </motion.button>
+
+          <motion.button
+            onClick={onStartSpelling}
+            className="relative group cursor-pointer"
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
+          >
+            <div
+              className="absolute -inset-2 rounded-full opacity-50 group-hover:opacity-70 transition-opacity"
+              style={{
+                background: "linear-gradient(135deg, #34d399, #3b82f6)",
+                filter: "blur(14px)",
+              }}
+            />
+            <div
+              className="relative px-10 py-4 rounded-full text-xl font-bold text-white"
+              style={{
+                background: "linear-gradient(135deg, #10b981 0%, #3b82f6 100%)",
+                boxShadow: "0 4px 24px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.15)",
+              }}
+            >
+              <span role="img" aria-label="pencil">✏️</span> Spelling Words
+            </div>
+          </motion.button>
+        </div>
+
+        {hasSave && (
+          <motion.button
+            onClick={onStart}
+            className="cursor-pointer px-8 py-2.5 rounded-full text-base font-medium text-white/40 hover:text-white/60 transition-colors"
+            style={{
+              border: "1px solid rgba(255,255,255,0.1)",
+            }}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+          >
+            Start Over
           </motion.button>
         )}
       </motion.div>

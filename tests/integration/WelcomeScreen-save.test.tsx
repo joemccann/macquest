@@ -3,29 +3,44 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 
 describe("WelcomeScreen without save", () => {
-  it('shows "Start Adventure" button', () => {
-    render(<WelcomeScreen onStart={() => {}} />);
-    expect(screen.getByText("Start Adventure")).toBeTruthy();
+  const defaultProps = {
+    onStart: vi.fn(),
+    onStartSpelling: vi.fn(),
+  };
+
+  it('shows "Practice Typing" button', () => {
+    render(<WelcomeScreen {...defaultProps} />);
+    expect(screen.getByText(/Practice Typing/)).toBeTruthy();
+  });
+
+  it('shows "Spelling Words" button', () => {
+    render(<WelcomeScreen {...defaultProps} />);
+    expect(screen.getByText(/Spelling Words/)).toBeTruthy();
   });
 
   it('does not show "Continue Adventure" button', () => {
-    render(<WelcomeScreen onStart={() => {}} />);
+    render(<WelcomeScreen {...defaultProps} />);
     expect(screen.queryByText("Continue Adventure")).toBeNull();
   });
 
+  it('does not show "Start Over" button', () => {
+    render(<WelcomeScreen {...defaultProps} />);
+    expect(screen.queryByText("Start Over")).toBeNull();
+  });
+
   it("shows Magic Buttons text", () => {
-    render(<WelcomeScreen onStart={() => {}} />);
+    render(<WelcomeScreen {...defaultProps} />);
     expect(screen.getByText(/Magic Buttons/)).toBeTruthy();
   });
 
   it("shows F and J key indicators", () => {
-    render(<WelcomeScreen onStart={() => {}} />);
+    render(<WelcomeScreen {...defaultProps} />);
     expect(screen.getByText("F")).toBeTruthy();
     expect(screen.getByText("J")).toBeTruthy();
   });
 
   it("shows bumps text", () => {
-    render(<WelcomeScreen onStart={() => {}} />);
+    render(<WelcomeScreen {...defaultProps} />);
     expect(screen.getByText(/bumps/i)).toBeTruthy();
   });
 });
@@ -33,6 +48,7 @@ describe("WelcomeScreen without save", () => {
 describe("WelcomeScreen with save", () => {
   const defaultSaveProps = {
     onStart: vi.fn(),
+    onStartSpelling: vi.fn(),
     onResume: vi.fn(),
     savedLevel: 5,
     savedScore: 1500,
@@ -41,6 +57,16 @@ describe("WelcomeScreen with save", () => {
   it('shows "Continue Adventure" button', () => {
     render(<WelcomeScreen {...defaultSaveProps} />);
     expect(screen.getByText("Continue Adventure")).toBeTruthy();
+  });
+
+  it('shows "Practice Typing" button', () => {
+    render(<WelcomeScreen {...defaultSaveProps} />);
+    expect(screen.getByText(/Practice Typing/)).toBeTruthy();
+  });
+
+  it('shows "Spelling Words" button', () => {
+    render(<WelcomeScreen {...defaultSaveProps} />);
+    expect(screen.getByText(/Spelling Words/)).toBeTruthy();
   });
 
   it('shows "Start Over" button', () => {
@@ -75,6 +101,13 @@ describe("WelcomeScreen with save", () => {
     render(<WelcomeScreen {...defaultSaveProps} onStart={onStart} />);
     fireEvent.click(screen.getByText("Start Over"));
     expect(onStart).toHaveBeenCalledTimes(1);
+  });
+
+  it("calls onStartSpelling when clicking Spelling Words", () => {
+    const onStartSpelling = vi.fn();
+    render(<WelcomeScreen {...defaultSaveProps} onStartSpelling={onStartSpelling} />);
+    fireEvent.click(screen.getByText(/Spelling Words/));
+    expect(onStartSpelling).toHaveBeenCalledTimes(1);
   });
 
   it("does not show Magic Buttons text", () => {
