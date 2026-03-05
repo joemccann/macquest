@@ -107,12 +107,12 @@ const SPELLING_WORDS = [
   "water", "happy", "house", "going", "about",
 ];
 
-// Letters and special characters
+// Letters spoken as alphabet names (not phonetic sounds)
 const LETTER_MAP = {
-  A: "A", B: "B", C: "C", D: "D", E: "E", F: "F", G: "G",
-  H: "H", I: "I", J: "J", K: "K", L: "L", M: "M", N: "N",
-  O: "O", P: "P", Q: "Q", R: "R", S: "S", T: "T", U: "U",
-  V: "V", W: "W", X: "X", Y: "Y", Z: "Z",
+  A: "Ay", B: "Bee", C: "See", D: "Dee", E: "Ee", F: "Eff", G: "Jee",
+  H: "Aitch", I: "Eye", J: "Jay", K: "Kay", L: "El", M: "Em", N: "En",
+  O: "Oh", P: "Pee", Q: "Cue", R: "Are", S: "Ess", T: "Tee", U: "You",
+  V: "Vee", W: "Double you", X: "Ex", Y: "Why", Z: "Zee",
   "0": "Zero", "1": "One", "2": "Two", "3": "Three", "4": "Four",
   "5": "Five", "6": "Six", "7": "Seven", "8": "Eight", "9": "Nine",
   ",": "Comma", ".": "Period", "/": "Forward Slash", ";": "Semicolon",
