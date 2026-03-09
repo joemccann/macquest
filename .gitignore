@@ -39,7 +39,6 @@ next-env.d.ts
 coverage/
 
 # screenshots from dev/testing
-*.png
 
 # dev artifacts
 PROMPT.md
