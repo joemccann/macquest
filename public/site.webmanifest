@@ -1,0 +1,21 @@
+{
+  "name": "MacQuest: The Typing Adventure",
+  "short_name": "MacQuest",
+  "description": "A magical typing adventure game for young explorers",
+  "start_url": "/",
+  "display": "fullscreen",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
