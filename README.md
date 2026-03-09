@@ -1,5 +1,7 @@
 # MacQuest: The Typing Adventure
 
+![MacQuest Banner](.github/banner.png)
+
 A typing game designed for young children learning the keyboard on a MacBook Pro. Turns a professional laptop into a playful, indestructible learning toy that progresses through the entire keyboard.
 
 ## What It Does
