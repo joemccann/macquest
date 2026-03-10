@@ -59,3 +59,144 @@ Set up the LobeHub Skills Marketplace for this Codex workspace, install the `rai
   - Left marketplace feedback with `skills comment ... --rating 4`.
   - Residual risk: `/` remains a client-only route with `ssr: false`; this fixes the blank initial state, not the broader SEO/first-paint tradeoff.
   - Session handoff written to `tasks/handoff.md` for the next Codex restart.
+
+---
+
+# Task Plan
+
+## Objective
+
+Repair the invalid `seo-audit` skill manifests so the skill loader stops skipping them for missing YAML frontmatter.
+
+## Dependency Graph
+
+- T1 -> T2 -> T3
+
+## Tasks
+
+- [x] T1 Inspect the broken skill manifests and surrounding skill tree
+  depends_on: []
+  success_criteria: Confirm the current file contents and determine the minimum valid manifest shape required.
+
+- [x] T2 Patch both `SKILL.md` files with valid YAML frontmatter and concise body text
+  depends_on: [T1]
+  success_criteria: `/Users/joemccann/.agents/skills/seo-audit/SKILL.md` and `/Users/joemccann/.agents/skills/seo-audit/skill/SKILL.md` both contain valid `---`-delimited YAML with `name` and `description`.
+
+- [x] T3 Verify the repair and document review notes
+  depends_on: [T2]
+  success_criteria: Validation shows the files are no longer empty and review notes record what was changed and any residual risk.
+
+## Review
+
+- Status: Complete
+- Verification:
+  - `node -e 'const fs=require("fs"); ...'` to confirm both manifests contain a `---`-delimited frontmatter block with `name`, `description`, and non-empty body text
+- Notes:
+  - The `seo-audit` tree currently contains mostly zero-byte placeholder files; this task only repairs the two invalid manifests called out by the loader.
+  - Added minimal placeholder metadata and body content to both `SKILL.md` files to stop the loader from skipping them for missing YAML.
+- Residual risk: the loader warning should be resolved, but the broader `seo-audit` package remains functionally incomplete until its other placeholder files are populated.
+
+---
+
+# Task Plan
+
+## Objective
+
+Audit the app's SEO surface and implement the smallest high-impact fixes for crawlability, metadata, structured data, and indexation.
+
+## Dependency Graph
+
+- T1 -> T2, T3
+- T2 -> T3
+- T3 -> T4
+- T4 -> T5, T6
+- T5 -> T6
+
+## Tasks
+
+- [x] T1 Inspect the current SEO surface in source and static assets
+  depends_on: []
+  success_criteria: Rendering mode, metadata, manifest, crawl directives, and structured data gaps are identified from the current codebase.
+
+- [x] T2 Validate runtime output for crawlability and indexable HTML
+  depends_on: [T1]
+  success_criteria: Built output or local runtime confirms what HTML, metadata, and crawl files are actually exposed to bots.
+
+- [x] T3 Choose the highest-value remediation set
+  depends_on: [T1, T2]
+  success_criteria: A bounded implementation scope is selected based on the audit findings and documented in the review notes.
+
+- [x] T4 Implement targeted SEO improvements
+  depends_on: [T3]
+  success_criteria: The selected fixes are applied with minimal code impact and preserve the existing product behavior.
+
+- [x] T5 Add regression coverage where it fits
+  depends_on: [T4]
+  success_criteria: Automated coverage exists for any new SEO-critical output that can be tested cheaply.
+
+- [x] T6 Verify changes and document review notes
+  depends_on: [T4, T5]
+  success_criteria: Relevant checks pass, review notes summarize findings and fixes, and residual risks are captured.
+
+## Review
+
+- Status: Complete
+- Verification:
+  - `npx eslint src/app/layout.tsx src/app/page.tsx src/app/robots.ts src/app/sitemap.ts src/lib/seo.ts src/components/KeyboardEngine.tsx src/lib/save-state.ts tests/integration/page.test.tsx tests/integration/KeyboardEngine.test.tsx tests/unit/metadata-routes.test.ts tests/unit/seo.test.ts`
+  - `npx vitest run tests/integration/page.test.tsx tests/integration/KeyboardEngine.test.tsx tests/unit/metadata-routes.test.ts tests/unit/seo.test.ts tests/unit/save-state.test.ts`
+  - `npm run test`
+  - `npm run build`
+  - Built artifact checks against `.next/server/app/index.html`, `.next/server/app/robots.txt.body`, and `.next/server/app/sitemap.xml.body`
+- Notes:
+  - Centralized SEO metadata in `src/lib/seo.ts`, including canonical URL, robots directives, keywords, social cards, and `SoftwareApplication` JSON-LD.
+  - Added static metadata routes for `/robots.txt` and `/sitemap.xml`.
+  - Removed the `ssr: false` home-route mount, then made save-state access SSR-safe with a `useSyncExternalStore` snapshot so the route can prerender without browser-only storage access.
+  - The built homepage now contains canonical metadata, robots directives, JSON-LD, the richer landing shell, and the welcome UI copy (`Practice Typing`, `Spelling Words`, `The Typing Adventure`) in the emitted HTML.
+  - Added regression coverage for SEO metadata, metadata routes, home-route structured data, and the hydration-safe save-state path exercised by `KeyboardEngine`.
+  - Residual risk: the prerendered HTML currently contains both the landing shell and the welcome screen markup inside the streamed payload, which is acceptable but heavier than a more explicitly designed marketing/game split.
+  - Residual risk: `src/app/sitemap.ts` currently uses a fixed `lastModified` date (`2026-03-10`) and should be updated if you want that field to reflect future content changes automatically.
+
+---
+
+# Task Plan
+
+## Objective
+
+Commit the completed SEO release work, push it to `origin/main`, and deploy the current repo state to the linked Vercel production project.
+
+## Dependency Graph
+
+- T1 -> T2
+- T2 -> T3
+- T3 -> T4
+- T4 -> T5
+
+## Tasks
+
+- [ ] T1 Validate git/deploy state and capture the release plan
+  depends_on: []
+  success_criteria: Current branch, working tree contents, remote, and linked deploy target are confirmed and this plan is on disk.
+
+- [ ] T2 Stage the intended release changes and create a commit
+  depends_on: [T1]
+  success_criteria: The SEO work is committed locally with a non-empty release commit on the current branch.
+
+- [ ] T3 Push the release commit to `origin/main`
+  depends_on: [T2]
+  success_criteria: The current branch is pushed successfully and `origin/main` contains the new commit.
+
+- [ ] T4 Deploy the current repo state to production
+  depends_on: [T3]
+  success_criteria: The linked Vercel project accepts a production deployment and returns a deployment URL or confirmation.
+
+- [ ] T5 Verify release outcomes and document review notes
+  depends_on: [T4]
+  success_criteria: Commit, push, and deploy results are recorded below with any remaining operational risks.
+
+## Review
+
+- Status: In progress
+- Verification:
+  - Pending
+- Notes:
+  - Pending

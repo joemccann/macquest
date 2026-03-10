@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import React from "react";
+import { SITE_TITLE } from "@/lib/seo";
 
 const { capturedDynamicConfig } = vi.hoisted(() => {
   const store: {
@@ -58,8 +59,8 @@ describe("Home page", () => {
     expect(typeof result).toBe("function");
   });
 
-  it("configures a branded loading fallback for the client-only game mount", () => {
-    expect(capturedDynamicConfig.options?.ssr).toBe(false);
+  it("keeps SSR enabled and configures a branded loading fallback", () => {
+    expect(capturedDynamicConfig.options?.ssr).not.toBe(false);
     expect(capturedDynamicConfig.options?.loading).toBeTypeOf("function");
 
     const LoadingFallback = capturedDynamicConfig.options?.loading as
@@ -71,9 +72,23 @@ describe("Home page", () => {
     expect(screen.getByTestId("space-background")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
-        name: "Preparing your starship keyboard...",
+        name: "Typing and spelling practice for kids on a MacBook Pro",
       })
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Practice Typing" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Why families use MacQuest" })
+    ).toBeInTheDocument();
     expect(screen.getByText("Loading game")).toBeInTheDocument();
+  });
+
+  it("renders structured data alongside the home route", () => {
+    render(<Home />);
+
+    expect(
+      document.querySelector("#seo-structured-data")?.textContent
+    ).toContain(SITE_TITLE);
   });
 });

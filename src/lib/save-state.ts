@@ -2,6 +2,29 @@ import type { GameMode } from "./game-state";
 
 const STORAGE_KEY = "macquest-save";
 const SAVE_VERSION = 2;
+export const SAVE_STATE_EVENT = "macquest-save-changed";
+let cachedSaveRaw: string | null | undefined;
+let cachedSaveState: SaveState | null = null;
+
+function getStorage(): Storage | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function emitSaveStateChange(): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.dispatchEvent(new Event(SAVE_STATE_EVENT));
+}
 
 export interface SaveState {
   version: number;
@@ -25,6 +48,9 @@ export function saveProgress(state: {
   spellingWordIndex: number;
 }): void {
   try {
+    const storage = getStorage();
+    if (!storage) return;
+
     const save: SaveState = {
       version: SAVE_VERSION,
       currentLevel: state.currentLevel,
@@ -36,7 +62,8 @@ export function saveProgress(state: {
       mode: state.mode,
       spellingWordIndex: state.spellingWordIndex,
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(save));
+    storage.setItem(STORAGE_KEY, JSON.stringify(save));
+    emitSaveStateChange();
   } catch {
     // Silent failure — game works without persistence
   }
@@ -44,21 +71,48 @@ export function saveProgress(state: {
 
 export function loadProgress(): SaveState | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
+    const storage = getStorage();
+    if (!storage) return null;
+
+    const raw = storage.getItem(STORAGE_KEY);
+    if (raw === cachedSaveRaw) {
+      return cachedSaveState;
+    }
+
+    cachedSaveRaw = raw;
+
+    if (!raw) {
+      cachedSaveState = null;
+      return null;
+    }
+
     const data: unknown = JSON.parse(raw);
-    if (isValidSaveState(data)) return data;
+    if (isValidSaveState(data)) {
+      cachedSaveState = data;
+      return data;
+    }
     // Migrate v1 saves
-    if (isValidV1SaveState(data)) return migrateV1(data);
+    if (isValidV1SaveState(data)) {
+      cachedSaveState = migrateV1(data);
+      return cachedSaveState;
+    }
+
+    cachedSaveState = null;
     return null;
   } catch {
+    cachedSaveRaw = null;
+    cachedSaveState = null;
     return null;
   }
 }
 
 export function clearProgress(): void {
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    const storage = getStorage();
+    if (!storage) return;
+
+    storage.removeItem(STORAGE_KEY);
+    emitSaveStateChange();
   } catch {
     // Silent failure
   }

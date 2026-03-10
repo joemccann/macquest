@@ -219,7 +219,7 @@ describe("KeyboardEngine", () => {
     clearTimeoutSpy.mockRestore();
   });
 
-  it("shows Continue Adventure when saved game exists", () => {
+  it("shows Continue Adventure when saved game exists", async () => {
     // Seed localStorage with a save
     localStorage.setItem(
       "macquest-save",
@@ -235,12 +235,12 @@ describe("KeyboardEngine", () => {
     );
 
     render(<KeyboardEngine />);
-    expect(screen.getByText("Continue Adventure")).toBeInTheDocument();
+    expect(await screen.findByText("Continue Adventure")).toBeInTheDocument();
     expect(screen.getByText("Start Over")).toBeInTheDocument();
     expect(screen.getByText(/Welcome back/)).toBeInTheDocument();
   });
 
-  it("resumes saved game when clicking Continue Adventure", () => {
+  it("resumes saved game when clicking Continue Adventure", async () => {
     localStorage.setItem(
       "macquest-save",
       JSON.stringify({
@@ -255,14 +255,14 @@ describe("KeyboardEngine", () => {
     );
 
     render(<KeyboardEngine />);
-    fireEvent.click(screen.getByText("Continue Adventure"));
+    fireEvent.click(await screen.findByText("Continue Adventure"));
 
     // Should be in playing phase at level 3 (0-indexed level 2)
     expect(screen.getByText("Level 3")).toBeInTheDocument();
     expect(screen.queryByText("Continue Adventure")).not.toBeInTheDocument();
   });
 
-  it("starts fresh when clicking Start Over with saved game", () => {
+  it("starts fresh when clicking Start Over with saved game", async () => {
     localStorage.setItem(
       "macquest-save",
       JSON.stringify({
@@ -277,7 +277,7 @@ describe("KeyboardEngine", () => {
     );
 
     render(<KeyboardEngine />);
-    fireEvent.click(screen.getByText("Start Over"));
+    fireEvent.click(await screen.findByText("Start Over"));
 
     // Should start at level 1
     expect(screen.getByText("Level 1")).toBeInTheDocument();

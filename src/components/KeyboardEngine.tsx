@@ -1,9 +1,21 @@
 "use client";
 
-import { useReducer, useCallback, useRef, useState, useEffect } from "react";
+import {
+  useReducer,
+  useCallback,
+  useRef,
+  useState,
+  useEffect,
+  useSyncExternalStore,
+} from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { gameReducer, getInitialState, LEVEL_NAMES } from "@/lib/game-state";
-import { saveProgress, loadProgress, clearProgress } from "@/lib/save-state";
+import {
+  saveProgress,
+  loadProgress,
+  clearProgress,
+  SAVE_STATE_EVENT,
+} from "@/lib/save-state";
 import type { SaveState } from "@/lib/save-state";
 import { useMacShield } from "@/hooks/useMacShield";
 import { useGameKeyboard } from "@/hooks/useGameKeyboard";
@@ -22,11 +34,35 @@ import {
   getWordAudio,
 } from "@/lib/spelling-audio";
 
+function subscribeToSavedGame(onStoreChange: () => void) {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key === "macquest-save" || event.key === null) {
+      onStoreChange();
+    }
+  };
+
+  window.addEventListener("storage", handleStorage);
+  window.addEventListener(SAVE_STATE_EVENT, onStoreChange);
+
+  return () => {
+    window.removeEventListener("storage", handleStorage);
+    window.removeEventListener(SAVE_STATE_EVENT, onStoreChange);
+  };
+}
+
 export function KeyboardEngine() {
   const [state, dispatch] = useReducer(gameReducer, undefined, getInitialState);
   const [pressedKey, setPressedKey] = useState<string | null>(null);
   const [explosionId, setExplosionId] = useState(0);
-  const [savedGame, setSavedGame] = useState<SaveState | null>(() => loadProgress());
+  const savedGame = useSyncExternalStore<SaveState | null>(
+    subscribeToSavedGame,
+    loadProgress,
+    () => null
+  );
   const celebrationTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const wrongTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const { speak, speakSequence, stopCurrent } = useSpeech();
@@ -121,14 +157,12 @@ export function KeyboardEngine() {
 
   const handleStart = useCallback(() => {
     clearProgress();
-    setSavedGame(null);
     dispatch({ type: "START_GAME" });
   }, []);
 
   const handleResume = useCallback(() => {
     if (savedGame) {
       dispatch({ type: "RESUME_GAME", save: savedGame });
-      setSavedGame(null);
     }
   }, [savedGame]);
 
@@ -148,7 +182,6 @@ export function KeyboardEngine() {
     stopCurrent();
     if (celebrationTimer.current) clearTimeout(celebrationTimer.current);
     if (wrongTimer.current) clearTimeout(wrongTimer.current);
-    setSavedGame(loadProgress());
     lastSpellingWord.current = "";
     dispatch({ type: "RETURN_HOME" });
   }, [stopCurrent]);
