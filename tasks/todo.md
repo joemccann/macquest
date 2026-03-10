@@ -173,30 +173,38 @@ Commit the completed SEO release work, push it to `origin/main`, and deploy the 
 
 ## Tasks
 
-- [ ] T1 Validate git/deploy state and capture the release plan
+- [x] T1 Validate git/deploy state and capture the release plan
   depends_on: []
   success_criteria: Current branch, working tree contents, remote, and linked deploy target are confirmed and this plan is on disk.
 
-- [ ] T2 Stage the intended release changes and create a commit
+- [x] T2 Stage the intended release changes and create a commit
   depends_on: [T1]
   success_criteria: The SEO work is committed locally with a non-empty release commit on the current branch.
 
-- [ ] T3 Push the release commit to `origin/main`
+- [x] T3 Push the release commit to `origin/main`
   depends_on: [T2]
   success_criteria: The current branch is pushed successfully and `origin/main` contains the new commit.
 
-- [ ] T4 Deploy the current repo state to production
+- [x] T4 Deploy the current repo state to production
   depends_on: [T3]
   success_criteria: The linked Vercel project accepts a production deployment and returns a deployment URL or confirmation.
 
-- [ ] T5 Verify release outcomes and document review notes
+- [x] T5 Verify release outcomes and document review notes
   depends_on: [T4]
   success_criteria: Commit, push, and deploy results are recorded below with any remaining operational risks.
 
 ## Review
 
-- Status: In progress
+- Status: Complete
 - Verification:
-  - Pending
+  - `git commit -m "Improve SEO crawlability and metadata"` -> commit `bf9bad5`
+  - `git push origin main`
+  - `npx vercel deploy --prod --yes`
+  - `curl -I https://macquest.app`
+  - `curl -s https://macquest.app | rg "canonical|application/ld\\+json|Practice Typing|Spelling Words"`
 - Notes:
-  - Pending
+  - Confirmed `origin` points to `git@github.com:joemccann/macquest.git` and `.vercel/project.json` is linked to project `macquest`.
+  - Pushed commit `bf9bad5` to `origin/main`.
+  - Vercel created production deployment `https://macquest-my8dvzgpd-joe-mccanns-projects.vercel.app` and aliased it to `https://macquest.app` on March 10, 2026.
+  - Live verification returned `HTTP/2 200` from `https://macquest.app` and the response HTML includes the canonical tag, JSON-LD script, and crawlable `Practice Typing` / `Spelling Words` content.
+  - Residual risk: this plan file update was written after the first deployment and should be committed so the repo history matches the recorded release notes exactly.
