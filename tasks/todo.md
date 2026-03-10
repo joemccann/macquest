@@ -326,51 +326,6 @@ Add a "What is MacQuest?" button beneath the welcome-screen actions and show a p
 
 ## Objective
 
-Commit the current audio + welcome-modal feature work, push it to `origin/main`, and deploy the resulting release to the linked Vercel production project.
-
-## Dependency Graph
-
-- T1 -> T2
-- T2 -> T3
-- T3 -> T4
-- T4 -> T5
-
-## Tasks
-
-- [ ] T1 Confirm the release scope, git state, and deploy target
-  depends_on: []
-  success_criteria: Current branch, changed files, remote, and `.vercel/project.json` target are verified and this plan is recorded on disk.
-
-- [ ] T2 Create a release commit for the current feature work
-  depends_on: [T1]
-  success_criteria: The intended feature files and task-log updates are staged together and committed with a non-empty commit on `main`.
-
-- [ ] T3 Push the release commit to `origin/main`
-  depends_on: [T2]
-  success_criteria: The new local commit is present on `origin/main`.
-
-- [ ] T4 Deploy the pushed state to production
-  depends_on: [T3]
-  success_criteria: Vercel accepts a production deployment and returns a deployment URL for the linked `macquest` project.
-
-- [ ] T5 Verify the release result and document review notes
-  depends_on: [T4]
-  success_criteria: Git, deploy, and live-site checks are recorded below with any remaining release risks.
-
-## Review
-
-- Status: In progress
-- Verification:
-  - Pending
-- Notes:
-  - Pending
-
----
-
-# Task Plan
-
-## Objective
-
 Commit the current audio and home-screen information updates, push them to `origin/main`, and deploy the release to the linked Vercel production project.
 
 ## Dependency Graph
@@ -406,14 +361,16 @@ Commit the current audio and home-screen information updates, push them to `orig
 
 - Status: Complete
 - Verification:
-  - `git commit -m "Add audio controls and home page explainer"` -> commit `74125b6`
-  - `git push origin main`
+  - `git log --oneline --decorate -1`
+  - `git rev-list --left-right --count origin/main...main`
   - `npx vercel deploy --prod --yes`
   - `curl -I https://macquest.app`
-  - `curl -s https://macquest.app | rg "What is MacQuest\\?|Practice Typing|Sound On|application/ld\\+json"`
+  - `curl -s https://macquest.app | rg -o -m 6 "Practice Typing|Spelling Words|Sound On|What is MacQuest\\?"`
 - Notes:
-  - Pushed commit `74125b6` to `origin/main`.
-  - Vercel created production deployment `https://macquest-4n4ucamt8-joe-mccanns-projects.vercel.app` and aliased it to `https://macquest.app` on March 10, 2026.
-  - Live verification returned `HTTP/2 200` from `https://macquest.app`, and the response HTML still includes the structured data and crawlable welcome content alongside the new home-screen experience.
+  - The feature work was already committed as `74125b6` (`Add audio controls and home page explainer`) and was already present on `origin/main` when this release task began.
+  - Confirmed `.vercel/project.json` is linked to project `macquest` under `joe-mccanns-projects`.
+  - Vercel created production deployment `https://macquest-m09u25he0-joe-mccanns-projects.vercel.app` with inspect URL `https://vercel.com/joe-mccanns-projects/macquest/2JrEwCUghFKveqVp9WpSTRgAKwQk` on March 10, 2026.
+  - The deployment was aliased to `https://macquest.app`, which returned `HTTP/2 200` during live verification.
+  - Live HTML verification returned the expected home-page strings: `Practice Typing`, `Spelling Words`, `Sound On`, and `What is MacQuest?`.
   - This release ships the persisted mute/unmute control and the new parent-facing `What is MacQuest?` modal from the welcome screen.
   - Residual risk: the passing test suite still prints the existing `GlobalError` HTML nesting warning from `tests/integration/error-pages.test.tsx`; this release does not touch that path.
