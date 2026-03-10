@@ -386,26 +386,34 @@ Commit the current audio and home-screen information updates, push them to `orig
   depends_on: []
   success_criteria: Current branch, working tree contents, and linked deploy target are confirmed and this plan is recorded on disk.
 
-- [ ] T2 Create a release commit for the current feature work
+- [x] T2 Create a release commit for the current feature work
   depends_on: [T1]
   success_criteria: The intended UI/audio changes are staged and committed locally on the current branch.
 
-- [ ] T3 Push the release commit to `origin/main`
+- [x] T3 Push the release commit to `origin/main`
   depends_on: [T2]
   success_criteria: The current branch is pushed successfully and the remote contains the new commit.
 
-- [ ] T4 Deploy the current repo state to production
+- [x] T4 Deploy the current repo state to production
   depends_on: [T3]
   success_criteria: Vercel accepts the deployment and returns a production URL or alias confirmation.
 
-- [ ] T5 Verify release outcomes and document review notes
+- [x] T5 Verify release outcomes and document review notes
   depends_on: [T4]
   success_criteria: Commit, push, deploy, and live verification results are recorded below with any remaining operational risks.
 
 ## Review
 
-- Status: In progress
+- Status: Complete
 - Verification:
-  - Pending
+  - `git commit -m "Add audio controls and home page explainer"` -> commit `74125b6`
+  - `git push origin main`
+  - `npx vercel deploy --prod --yes`
+  - `curl -I https://macquest.app`
+  - `curl -s https://macquest.app | rg "What is MacQuest\\?|Practice Typing|Sound On|application/ld\\+json"`
 - Notes:
-  - Pending
+  - Pushed commit `74125b6` to `origin/main`.
+  - Vercel created production deployment `https://macquest-4n4ucamt8-joe-mccanns-projects.vercel.app` and aliased it to `https://macquest.app` on March 10, 2026.
+  - Live verification returned `HTTP/2 200` from `https://macquest.app`, and the response HTML still includes the structured data and crawlable welcome content alongside the new home-screen experience.
+  - This release ships the persisted mute/unmute control and the new parent-facing `What is MacQuest?` modal from the welcome screen.
+  - Residual risk: the passing test suite still prints the existing `GlobalError` HTML nesting warning from `tests/integration/error-pages.test.tsx`; this release does not touch that path.
