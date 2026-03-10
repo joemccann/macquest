@@ -99,6 +99,24 @@ describe("useSpeech", () => {
       expect(mockPlay).not.toHaveBeenCalled();
     });
 
+    it("does not start playback while muted", () => {
+      const mockPlay = vi.fn().mockResolvedValue(undefined);
+
+      mockAudioConstructor({
+        play: mockPlay,
+        pause: vi.fn(),
+        volume: 1,
+      });
+
+      const { result } = renderHook(() => useSpeech({ muted: true }));
+
+      act(() => {
+        result.current.speak("Hello", "/audio/hello.mp3");
+      });
+
+      expect(mockPlay).not.toHaveBeenCalled();
+    });
+
     it("silently handles audio play failure", async () => {
       const failingPlay = vi.fn().mockRejectedValue(new Error("Playback failed"));
 
@@ -218,5 +236,29 @@ describe("useSpeech", () => {
 
       expect(firstPause).toHaveBeenCalled();
     });
+  });
+
+  it("stops current audio when muted is toggled on", () => {
+    const mockPause = vi.fn();
+    const mockPlay = vi.fn().mockResolvedValue(undefined);
+
+    mockAudioConstructor({
+      play: mockPlay,
+      pause: mockPause,
+      volume: 1,
+    });
+
+    const { result, rerender } = renderHook(
+      ({ muted }) => useSpeech({ muted }),
+      { initialProps: { muted: false } }
+    );
+
+    act(() => {
+      result.current.speak("Hello", "/audio/hello.mp3");
+    });
+
+    rerender({ muted: true });
+
+    expect(mockPause).toHaveBeenCalled();
   });
 });

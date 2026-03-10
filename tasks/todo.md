@@ -208,3 +208,204 @@ Commit the completed SEO release work, push it to `origin/main`, and deploy the 
   - Vercel created production deployment `https://macquest-my8dvzgpd-joe-mccanns-projects.vercel.app` and aliased it to `https://macquest.app` on March 10, 2026.
   - Live verification returned `HTTP/2 200` from `https://macquest.app` and the response HTML includes the canonical tag, JSON-LD script, and crawlable `Practice Typing` / `Spelling Words` content.
   - Residual risk: this plan file update was written after the first deployment and should be committed so the repo history matches the recorded release notes exactly.
+
+---
+
+# Task Plan
+
+## Objective
+
+Add a styled mute/unmute control that fits the existing MacQuest interface, stops current playback when muted, and preserves the audio preference across sessions.
+
+## Dependency Graph
+
+- T1 -> T2, T3
+- T2 -> T4
+- T3 -> T4
+- T4 -> T5
+- T5 -> T6
+
+## Tasks
+
+- [x] T1 Inspect current audio flow, controls, and test coverage
+  depends_on: []
+  success_criteria: Audio playback entry points, good control placement, and relevant tests are identified.
+
+- [x] T2 Add persisted audio preference state and hook it into playback
+  depends_on: [T1]
+  success_criteria: Muted state can be read/written safely with SSR, and all speech playback respects it.
+
+- [x] T3 Implement a reusable mute/unmute control matching the current UI
+  depends_on: [T1]
+  success_criteria: The control is accessible, responsive, and visually consistent with the app’s existing floating chrome.
+
+- [x] T4 Integrate the control across the main game surfaces
+  depends_on: [T2, T3]
+  success_criteria: Welcome, playing, level-complete, and victory flows expose the toggle without disrupting layout.
+
+- [x] T5 Add regression coverage where it fits
+  depends_on: [T4]
+  success_criteria: Tests cover preference persistence and the UI toggle behavior at a meaningful level.
+
+- [x] T6 Verify behavior and document review notes
+  depends_on: [T5]
+  success_criteria: Relevant lint/tests pass and the review notes record the behavior and any remaining risks.
+
+## Review
+
+- Status: Complete
+- Verification:
+  - `npx eslint src/lib/audio-preference.ts src/components/AudioToggle.tsx src/hooks/useSpeech.ts src/components/KeyboardEngine.tsx tests/unit/useSpeech.test.ts tests/integration/KeyboardEngine.test.tsx`
+  - `npx vitest run tests/unit/useSpeech.test.ts tests/integration/KeyboardEngine.test.tsx`
+  - `npx vitest run tests/unit/audio-preference.test.ts`
+  - `npm run test`
+  - `npm run build`
+- Notes:
+  - Added a dedicated persisted audio preference store in `src/lib/audio-preference.ts` so mute state survives reloads without coupling to gameplay save data.
+  - Updated `useSpeech` so both single-file playback and queued sequences honor the mute setting and immediately stop when the user mutes mid-session.
+  - Added a reusable floating `AudioToggle` control styled to match the existing glassy HUD chrome, with `Mute sound` / `Unmute sound` accessibility labels and visible `Sound On` / `Muted` state text.
+  - Mounted the toggle in the top-right corner across welcome, active play, level-complete, and victory screens so the control stays consistent without interfering with the existing Home button on the left.
+  - Added regression coverage for storage persistence in `tests/unit/audio-preference.test.ts`, muted playback behavior in `tests/unit/useSpeech.test.ts`, and persisted toggle behavior in `tests/integration/KeyboardEngine.test.tsx`.
+  - Residual risk: `npm run test` still prints the existing `GlobalError` HTML nesting warning from `tests/integration/error-pages.test.tsx`; the suite passes and this feature does not touch that path.
+
+---
+
+# Task Plan
+
+## Objective
+
+Add a "What is MacQuest?" button beneath the welcome-screen actions and show a parent-facing modal that explains the app and its PhD research roots in the existing visual style.
+
+## Dependency Graph
+
+- T1 -> T2, T3
+- T2 -> T4
+- T3 -> T4
+- T4 -> T5
+
+## Tasks
+
+- [x] T1 Inspect the welcome screen layout and relevant tests
+  depends_on: []
+  success_criteria: The insertion point, modal interaction constraints, and test coverage targets are identified.
+
+- [x] T2 Implement the button and modal interaction
+  depends_on: [T1]
+  success_criteria: Users can open and close the modal from the welcome screen without affecting the existing primary actions.
+
+- [x] T3 Write the parent-facing explanatory content
+  depends_on: [T1]
+  success_criteria: The copy explains the product and research basis clearly, in a fun tone, using only supported context.
+
+- [x] T4 Add regression coverage for the new welcome-screen behavior
+  depends_on: [T2, T3]
+  success_criteria: Tests verify the button renders and the modal opens/closes correctly.
+
+- [x] T5 Verify the home-screen changes and document review notes
+  depends_on: [T4]
+  success_criteria: Relevant lint/tests/build checks are re-run and review notes capture behavior and remaining risks.
+
+## Review
+
+- Status: Complete
+- Verification:
+  - `npx eslint src/components/WelcomeScreen.tsx src/components/AudioToggle.tsx src/components/KeyboardEngine.tsx src/hooks/useSpeech.ts src/lib/audio-preference.ts tests/integration/WelcomeScreen.test.tsx tests/integration/WelcomeScreen-save.test.tsx tests/integration/KeyboardEngine.test.tsx tests/unit/useSpeech.test.ts tests/unit/audio-preference.test.ts`
+  - `npx vitest run tests/integration/WelcomeScreen.test.tsx tests/integration/WelcomeScreen-save.test.tsx tests/integration/KeyboardEngine.test.tsx tests/unit/useSpeech.test.ts tests/unit/audio-preference.test.ts`
+  - `npm run test`
+  - `npm run build`
+- Notes:
+  - Added a new `What is MacQuest?` secondary action beneath the existing welcome-screen buttons so parents have a clear explanatory path without diluting the primary play choices.
+  - Introduced a modal overlay on the welcome screen with keyboard and click-outside dismissal, plus parent-facing copy that explains the game loop, the research roots, and the learning-science rationale in plain English.
+  - Kept the new UI in the existing visual language with the same glass treatment, gradients, motion, and rounded chrome already used throughout the home screen.
+  - Expanded welcome-screen integration coverage to verify the button renders in both fresh and resume states and that the modal opens and closes correctly.
+  - Residual risk: `npm run test` still prints the existing `GlobalError` HTML nesting warning from `tests/integration/error-pages.test.tsx`; the suite passes and this change does not touch that path.
+
+---
+
+# Task Plan
+
+## Objective
+
+Commit the current audio + welcome-modal feature work, push it to `origin/main`, and deploy the resulting release to the linked Vercel production project.
+
+## Dependency Graph
+
+- T1 -> T2
+- T2 -> T3
+- T3 -> T4
+- T4 -> T5
+
+## Tasks
+
+- [ ] T1 Confirm the release scope, git state, and deploy target
+  depends_on: []
+  success_criteria: Current branch, changed files, remote, and `.vercel/project.json` target are verified and this plan is recorded on disk.
+
+- [ ] T2 Create a release commit for the current feature work
+  depends_on: [T1]
+  success_criteria: The intended feature files and task-log updates are staged together and committed with a non-empty commit on `main`.
+
+- [ ] T3 Push the release commit to `origin/main`
+  depends_on: [T2]
+  success_criteria: The new local commit is present on `origin/main`.
+
+- [ ] T4 Deploy the pushed state to production
+  depends_on: [T3]
+  success_criteria: Vercel accepts a production deployment and returns a deployment URL for the linked `macquest` project.
+
+- [ ] T5 Verify the release result and document review notes
+  depends_on: [T4]
+  success_criteria: Git, deploy, and live-site checks are recorded below with any remaining release risks.
+
+## Review
+
+- Status: In progress
+- Verification:
+  - Pending
+- Notes:
+  - Pending
+
+---
+
+# Task Plan
+
+## Objective
+
+Commit the current audio and home-screen information updates, push them to `origin/main`, and deploy the release to the linked Vercel production project.
+
+## Dependency Graph
+
+- T1 -> T2
+- T2 -> T3
+- T3 -> T4
+- T4 -> T5
+
+## Tasks
+
+- [x] T1 Validate git/deploy state and capture the release plan
+  depends_on: []
+  success_criteria: Current branch, working tree contents, and linked deploy target are confirmed and this plan is recorded on disk.
+
+- [ ] T2 Create a release commit for the current feature work
+  depends_on: [T1]
+  success_criteria: The intended UI/audio changes are staged and committed locally on the current branch.
+
+- [ ] T3 Push the release commit to `origin/main`
+  depends_on: [T2]
+  success_criteria: The current branch is pushed successfully and the remote contains the new commit.
+
+- [ ] T4 Deploy the current repo state to production
+  depends_on: [T3]
+  success_criteria: Vercel accepts the deployment and returns a production URL or alias confirmation.
+
+- [ ] T5 Verify release outcomes and document review notes
+  depends_on: [T4]
+  success_criteria: Commit, push, deploy, and live verification results are recorded below with any remaining operational risks.
+
+## Review
+
+- Status: In progress
+- Verification:
+  - Pending
+- Notes:
+  - Pending

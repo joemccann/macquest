@@ -41,6 +41,13 @@ describe("WelcomeScreen", () => {
     expect(screen.getByText(/Spelling Words/)).toBeInTheDocument();
   });
 
+  it('shows "What is MacQuest?" button', () => {
+    render(<WelcomeScreen {...defaultProps} />);
+    expect(
+      screen.getByRole("button", { name: /What is MacQuest\?/ })
+    ).toBeInTheDocument();
+  });
+
   it("calls onStart when 'Practice Typing' button is clicked", () => {
     const onStart = vi.fn();
     render(<WelcomeScreen {...defaultProps} onStart={onStart} />);
@@ -84,7 +91,33 @@ describe("WelcomeScreen", () => {
 
   it("renders both mode buttons as button elements", () => {
     render(<WelcomeScreen {...defaultProps} />);
-    const buttons = screen.getAllByRole("button");
-    expect(buttons.length).toBe(2);
+    expect(
+      screen.getByRole("button", { name: /Practice Typing/ })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Spelling Words/ })
+    ).toBeInTheDocument();
+  });
+
+  it("opens and closes the MacQuest info modal", () => {
+    render(<WelcomeScreen {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /What is MacQuest\?/ }));
+
+    expect(
+      screen.getByRole("dialog", { name: "What is MacQuest?" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/started in PhD research/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Back to the cockpit" })
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Close MacQuest info modal" })
+    );
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

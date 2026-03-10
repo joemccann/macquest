@@ -69,6 +69,13 @@ describe("WelcomeScreen with save", () => {
     expect(screen.getByText(/Spelling Words/)).toBeTruthy();
   });
 
+  it('shows "What is MacQuest?" button', () => {
+    render(<WelcomeScreen {...defaultSaveProps} />);
+    expect(
+      screen.getByRole("button", { name: /What is MacQuest\?/ })
+    ).toBeTruthy();
+  });
+
   it('shows "Start Over" button', () => {
     render(<WelcomeScreen {...defaultSaveProps} />);
     expect(screen.getByText("Start Over")).toBeTruthy();

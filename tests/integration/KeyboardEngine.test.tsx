@@ -29,6 +29,27 @@ describe("KeyboardEngine", () => {
     expect(screen.getByText(/Practice Typing/)).toBeInTheDocument();
     expect(screen.getByText(/Spelling Words/)).toBeInTheDocument();
     expect(screen.getByText("The Typing Adventure")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Mute sound" })
+    ).toBeInTheDocument();
+  });
+
+  it("persists the mute toggle across sessions", async () => {
+    const { unmount } = render(<KeyboardEngine />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Mute sound" }));
+
+    expect(localStorage.getItem("macquest-muted")).toBe("true");
+    expect(
+      screen.getByRole("button", { name: "Unmute sound" })
+    ).toBeInTheDocument();
+
+    unmount();
+    render(<KeyboardEngine />);
+
+    expect(
+      screen.getByRole("button", { name: "Unmute sound" })
+    ).toBeInTheDocument();
   });
 
   it("transitions to playing phase after clicking Practice Typing", () => {

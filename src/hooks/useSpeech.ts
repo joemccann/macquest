@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 /**
  * Plays pre-recorded ElevenLabs MP3 files.
@@ -8,7 +8,11 @@ import { useCallback, useRef } from "react";
  * `speak()` — play a single clip
  * `speakSequence()` — play multiple clips back-to-back
  */
-export function useSpeech() {
+interface UseSpeechOptions {
+  muted?: boolean;
+}
+
+export function useSpeech({ muted = false }: UseSpeechOptions = {}) {
   const currentAudio = useRef<HTMLAudioElement | null>(null);
   const sequenceAbort = useRef<AbortController | null>(null);
 
@@ -38,19 +42,21 @@ export function useSpeech() {
     if (typeof window === "undefined") return;
 
     stopCurrent();
+    if (muted) return;
 
     if (audioFile) {
       playFile(audioFile).catch(() => {
         // Silently ignore playback failures
       });
     }
-  }, [stopCurrent, playFile]);
+  }, [muted, stopCurrent, playFile]);
 
   /** Play multiple audio files in sequence (stops if a new speak/sequence call occurs) */
   const speakSequence = useCallback((audioFiles: string[]) => {
     if (typeof window === "undefined") return;
 
     stopCurrent();
+    if (muted) return;
 
     const controller = new AbortController();
     sequenceAbort.current = controller;
@@ -65,7 +71,13 @@ export function useSpeech() {
         }
       }
     })();
-  }, [stopCurrent, playFile]);
+  }, [muted, stopCurrent, playFile]);
+
+  useEffect(() => {
+    if (muted) {
+      stopCurrent();
+    }
+  }, [muted, stopCurrent]);
 
   return { speak, speakSequence, stopCurrent };
 }

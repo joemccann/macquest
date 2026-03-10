@@ -24,6 +24,7 @@ import { StarshipKeyboard } from "./StarshipKeyboard";
 import { ParticleExplosion } from "./ParticleExplosion";
 import { WelcomeScreen } from "./WelcomeScreen";
 import { SpaceBackground } from "./SpaceBackground";
+import { AudioToggle } from "./AudioToggle";
 import { generatePhrase } from "@/app/actions/generate-phrase";
 import { getRandomWrongPhrase } from "@/lib/phrases";
 import {
@@ -33,6 +34,11 @@ import {
   getSpellWordAudio,
   getWordAudio,
 } from "@/lib/spelling-audio";
+import {
+  loadMutedPreference,
+  saveMutedPreference,
+  subscribeToMutedPreference,
+} from "@/lib/audio-preference";
 
 function subscribeToSavedGame(onStoreChange: () => void) {
   if (typeof window === "undefined") {
@@ -63,9 +69,14 @@ export function KeyboardEngine() {
     loadProgress,
     () => null
   );
+  const muted = useSyncExternalStore(
+    subscribeToMutedPreference,
+    loadMutedPreference,
+    () => false
+  );
   const celebrationTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const wrongTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const { speak, speakSequence, stopCurrent } = useSpeech();
+  const { speak, speakSequence, stopCurrent } = useSpeech({ muted });
   const lastSpellingWord = useRef<string>("");
 
   useMacShield();
@@ -186,6 +197,10 @@ export function KeyboardEngine() {
     dispatch({ type: "RETURN_HOME" });
   }, [stopCurrent]);
 
+  const handleToggleAudio = useCallback(() => {
+    saveMutedPreference(!muted);
+  }, [muted]);
+
   const progress =
     state.totalLetters > 0
       ? (state.currentLetterIndex / state.totalLetters) * 100
@@ -195,13 +210,20 @@ export function KeyboardEngine() {
     return (
       <>
         <SpaceBackground />
-        <WelcomeScreen
-          onStart={handleStart}
-          onStartSpelling={handleStartSpelling}
-          onResume={savedGame ? handleResume : undefined}
-          savedLevel={savedGame ? savedGame.currentLevel + 1 : undefined}
-          savedScore={savedGame?.score}
-        />
+        <div className="relative min-h-screen">
+          <AudioToggle
+            muted={muted}
+            onToggle={handleToggleAudio}
+            className="absolute top-4 right-4 z-20"
+          />
+          <WelcomeScreen
+            onStart={handleStart}
+            onStartSpelling={handleStartSpelling}
+            onResume={savedGame ? handleResume : undefined}
+            savedLevel={savedGame ? savedGame.currentLevel + 1 : undefined}
+            savedScore={savedGame?.score}
+          />
+        </div>
       </>
     );
   }
@@ -224,6 +246,11 @@ export function KeyboardEngine() {
             <span className="text-base">🏠</span>
             <span>Home</span>
           </motion.button>
+          <AudioToggle
+            muted={muted}
+            onToggle={handleToggleAudio}
+            className="absolute top-4 right-4 z-20"
+          />
 
           <motion.div
             className="text-8xl"
@@ -376,6 +403,11 @@ export function KeyboardEngine() {
             <span className="text-base">🏠</span>
             <span>Home</span>
           </motion.button>
+          <AudioToggle
+            muted={muted}
+            onToggle={handleToggleAudio}
+            className="absolute top-4 right-4 z-20"
+          />
 
           {/* Celebration emoji */}
           <motion.div
@@ -537,6 +569,11 @@ export function KeyboardEngine() {
           <span className="text-base">🏠</span>
           <span>Home</span>
         </motion.button>
+        <AudioToggle
+          muted={muted}
+          onToggle={handleToggleAudio}
+          className="absolute top-4 right-4 z-20"
+        />
 
         {/* Header bar — pinned near top */}
         <div className="w-full max-w-2xl">
