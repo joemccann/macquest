@@ -1,23 +1,24 @@
 import { describe, it, expect, vi } from "vitest";
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import React from "react";
 
-// Use vi.hoisted to make variable available in mock factory
-const { capturedLoader } = vi.hoisted(() => {
-  const store: { loader: (() => Promise<unknown>) | null } = { loader: null };
+const { capturedDynamicConfig } = vi.hoisted(() => {
+  const store: {
+    loader: (() => Promise<unknown>) | null;
+    options?: Record<string, unknown>;
+  } = { loader: null };
   return {
-    capturedLoader: store,
+    capturedDynamicConfig: store,
   };
 });
 
-// Mock next/dynamic to capture and invoke the loader
 vi.mock("next/dynamic", () => ({
   default: (
     loader: () => Promise<unknown>,
-    _opts?: Record<string, unknown>
+    opts?: Record<string, unknown>
   ) => {
-    capturedLoader.loader = loader;
-    // Return a simple component
+    capturedDynamicConfig.loader = loader;
+    capturedDynamicConfig.options = opts;
     const MockedDynamic = () =>
       React.createElement("div", { "data-testid": "keyboard-engine" }, "KeyboardEngine");
     MockedDynamic.displayName = "DynamicKeyboardEngine";
@@ -29,6 +30,11 @@ vi.mock("next/dynamic", () => ({
 vi.mock("@/components/KeyboardEngine", () => ({
   KeyboardEngine: () =>
     React.createElement("div", null, "MockedKeyboardEngine"),
+}));
+
+vi.mock("@/components/SpaceBackground", () => ({
+  SpaceBackground: () =>
+    React.createElement("div", { "data-testid": "space-background" }),
 }));
 
 import Home from "@/app/page";
@@ -45,13 +51,29 @@ describe("Home page", () => {
   });
 
   it("dynamic import loader resolves to KeyboardEngine", async () => {
-    // capturedLoader was set when page.tsx was imported
-    expect(capturedLoader.loader).toBeDefined();
+    expect(capturedDynamicConfig.loader).toBeDefined();
 
-    // Call the loader to exercise the dynamic import callback: (m) => m.KeyboardEngine
-    const result = await capturedLoader.loader!();
-    // The result should be the KeyboardEngine component (mocked)
+    const result = await capturedDynamicConfig.loader!();
     expect(result).toBeDefined();
     expect(typeof result).toBe("function");
+  });
+
+  it("configures a branded loading fallback for the client-only game mount", () => {
+    expect(capturedDynamicConfig.options?.ssr).toBe(false);
+    expect(capturedDynamicConfig.options?.loading).toBeTypeOf("function");
+
+    const LoadingFallback = capturedDynamicConfig.options?.loading as
+      | (() => React.ReactNode)
+      | undefined;
+
+    render(<>{LoadingFallback?.()}</>);
+
+    expect(screen.getByTestId("space-background")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "Preparing your starship keyboard...",
+      })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Loading game")).toBeInTheDocument();
   });
 });

@@ -103,6 +103,13 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in Chrome on a MacBook for the best experience. Full-screen mode is recommended.
 
+## Agent Workflow Notes
+
+- Execution plans and verification notes live in `tasks/todo.md`.
+- Session restart and handoff context live in `tasks/handoff.md`.
+- The repo-local Codex skill install path is `.agents/skills/raisiqueira-claude-code-plugins-nextjs-expert/SKILL.md`.
+- After installing or changing repo-local skills, restart Codex in this repo so the new skill definitions are loaded.
+
 ## Project Structure
 
 ```
