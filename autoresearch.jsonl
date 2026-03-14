@@ -1,1 +1,2 @@
 {"type":"config","name":"Lighthouse Performance Optimization for MacQuest","metricName":"lighthouse_perf","metricUnit":"","bestDirection":"higher"}
+{"run":1,"commit":"918ba18","metric":93,"metrics":{"lcp_ms":2323,"speed_index_ms":4392,"tbt_ms":183,"cls":0,"fcp_ms":1020},"status":"keep","description":"Baseline: Lighthouse perf=93, LCP=2323ms, SI=4392ms, TBT=183ms","timestamp":1773527619978,"segment":0}
