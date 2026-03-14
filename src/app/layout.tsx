@@ -8,7 +8,17 @@ const fredoka = Fredoka({
   weight: ["400", "500", "600", "700"],
 });
 
-export const metadata = siteMetadata;
+export const metadata = {
+  ...siteMetadata,
+  other: {
+    "color-scheme": "dark",
+  },
+};
+
+export const viewport = {
+  themeColor: "#060818",
+  colorScheme: "dark" as const,
+};
 
 export default function RootLayout({
   children,
