@@ -51,4 +51,33 @@ Architecture: `page.tsx` uses `next/dynamic` to lazy-load `KeyboardEngine`. The 
 - The visual appearance must remain the same
 
 ## What's Been Tried
-(Updated as experiments accumulate)
+
+### Wins
+1. **Remove unused Gabarito font** — The entire Gabarito font family (~30KB) was loaded but never used. Removed it. +3 score.
+2. **Remove Fredoka weight 300** — Weight 300 (light) was loaded but never used in any component. Removed. (part of #1)
+3. **optimizePackageImports** — Added `framer-motion` and `lucide-react` to optimizePackageImports in next.config. Massive TBT reduction (183→20ms). +3 score.
+4. **Strip unused CSS theme vars** — Removed sidebar, chart, popover, card, muted, destructive, accent, secondary, primary CSS variables. Also removed 5 unused keyframes (glow, drift, bounce-gentle, shooting-star, spin-slow). CSS size -2KB.
+5. **Reduce star count** — SpaceBackground stars 120→60. Fewer DOM elements in initial SSR.
+6. **Glass-panel containment** — Added `will-change: transform` and `contain: layout style paint` to `.glass-panel`.
+7. **SpaceBackground containment** — Added `contain: strict` to wrapper div.
+8. **Remove LCP element drop-shadow** — Removed `filter: drop-shadow()` from the loading shell's `<h1>` (LCP element). Reduces compositing cost.
+9. **Misc** — `poweredByHeader: false`, cache headers for static assets.
+
+### Dead Ends
+- `experimental.optimizeCss: true` — Requires `critters` dependency (constraint: no new deps).
+- Further font weight reduction — Would change visual appearance (400/500/600/700 all used).
+- `font-display: optional` — Would hide text if font doesn't load in time. Bad UX for kids app.
+
+### Current State (Experiment #8)
+- Perf: consistently 97-99 (median ~99)
+- LCP: ~2050ms (dominated by TTFB ~600ms from Vercel CDN)
+- SI: 2400-4100ms (bimodal, driven by network conditions)
+- TBT: 8-40ms (excellent)
+- FCP: ~1150ms (good)
+- A11y/SEO/BP: all 100
+
+### Remaining Bottleneck
+LCP at ~2s is dominated by Vercel CDN TTFB (~600ms). Further improvement requires either:
+- Reducing CSS render-blocking (already minimal at ~7.6KB gzipped)
+- Reducing initial JS parsing (already at 102KB shared + 55KB page)
+- Edge caching tricks (limited by Vercel free tier)
