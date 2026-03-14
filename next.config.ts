@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   // Enable gzip compression
   compress: true,
 
+  // Remove X-Powered-By header
+  poweredByHeader: false,
+
   // Security & performance headers
   headers: async () => [
     {

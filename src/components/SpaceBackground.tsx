@@ -35,7 +35,7 @@ const BRIGHT_STARS = [
 
 export function SpaceBackground() {
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" style={{ contain: "strict" }}>
       {/* Deep space base gradient */}
       <div
         className="absolute inset-0"
