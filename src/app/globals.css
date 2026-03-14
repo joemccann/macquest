@@ -112,6 +112,15 @@ body {
   50% { opacity: 1; transform: scale(1.4); }
 }
 
+/* Defer non-critical animations until after paint */
+@media (prefers-reduced-motion: no-preference) {
+  .animate-twinkle,
+  .animate-float,
+  .animate-aurora {
+    will-change: transform, opacity;
+  }
+}
+
 @keyframes float {
   0%, 100% { transform: translateY(0px) rotate(0deg); }
   33% { transform: translateY(-25px) rotate(3deg); }

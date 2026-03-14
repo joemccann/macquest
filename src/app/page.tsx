@@ -26,7 +26,6 @@ function LoadingShell() {
                       "linear-gradient(135deg, #f472b6 0%, #c084fc 25%, #818cf8 50%, #38bdf8 75%, #34d399 100%)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
-                    filter: "drop-shadow(0 4px 24px rgba(139, 92, 246, 0.28))",
                   }}
                 >
                   Typing and spelling practice for kids on a MacBook Pro
