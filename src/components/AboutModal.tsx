@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 interface AboutModalProps {
   onClose: () => void;
@@ -8,14 +8,14 @@ interface AboutModalProps {
 
 export function AboutModal({ onClose }: AboutModalProps) {
   return (
-    <motion.div
+    <m.div
       className="fixed inset-0 z-30 flex items-center justify-center bg-[#050714]/78 px-4 py-6 backdrop-blur-md"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
     >
-      <motion.section
+      <m.section
         role="dialog"
         aria-modal="true"
         aria-labelledby="macquest-about-title"
@@ -134,7 +134,7 @@ export function AboutModal({ onClose }: AboutModalProps) {
           </p>
 
           <div className="mt-7 flex justify-end">
-            <motion.button
+            <m.button
               type="button"
               onClick={onClose}
               className="relative cursor-pointer"
@@ -157,10 +157,10 @@ export function AboutModal({ onClose }: AboutModalProps) {
               >
                 Back to the cockpit
               </div>
-            </motion.button>
+            </m.button>
           </div>
         </div>
-      </motion.section>
-    </motion.div>
+      </m.section>
+    </m.div>
   );
 }

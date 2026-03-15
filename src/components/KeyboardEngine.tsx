@@ -8,7 +8,7 @@ import {
   useEffect,
   useSyncExternalStore,
 } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { LazyMotion, domAnimation, m, AnimatePresence } from "framer-motion";
 import { gameReducer, getInitialState, LEVEL_NAMES } from "@/lib/game-state";
 import {
   saveProgress,
@@ -208,7 +208,7 @@ export function KeyboardEngine() {
 
   if (state.phase === "welcome") {
     return (
-      <>
+      <LazyMotion features={domAnimation} strict>
         <SpaceBackground />
         <div className="relative min-h-screen">
           <AudioToggle
@@ -224,7 +224,7 @@ export function KeyboardEngine() {
             savedScore={savedGame?.score}
           />
         </div>
-      </>
+      </LazyMotion>
     );
   }
 
@@ -232,11 +232,11 @@ export function KeyboardEngine() {
     const isSpellingVictory = state.mode === "spelling";
 
     return (
-      <>
+      <LazyMotion features={domAnimation} strict>
         <SpaceBackground />
         <div className="flex flex-col items-center justify-center min-h-screen gap-8 px-4 relative z-10">
           {/* Home button */}
-          <motion.button
+          <m.button
             onClick={handleReturnHome}
             className="absolute top-4 left-4 cursor-pointer z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
             style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(8px)" }}
@@ -245,23 +245,23 @@ export function KeyboardEngine() {
           >
             <span className="text-base">🏠</span>
             <span>Home</span>
-          </motion.button>
+          </m.button>
           <AudioToggle
             muted={muted}
             onToggle={handleToggleAudio}
             className="absolute top-4 right-4 z-20"
           />
 
-          <motion.div
+          <m.div
             className="text-8xl"
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 10 }}
           >
             {isSpellingVictory ? "🎓" : "🏆"}
-          </motion.div>
+          </m.div>
 
-          <motion.div
+          <m.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
@@ -283,9 +283,9 @@ export function KeyboardEngine() {
                 ? "You spelled all 100 words!"
                 : "You mastered the entire keyboard!"}
             </p>
-          </motion.div>
+          </m.div>
 
-          <motion.div
+          <m.div
             className="glass-panel px-10 py-6 text-center"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -310,11 +310,11 @@ export function KeyboardEngine() {
                 {state.perfectLevels.length} perfect {state.mode === "spelling" ? "word" : "level"}{state.perfectLevels.length !== 1 ? "s" : ""}!
               </p>
             )}
-          </motion.div>
+          </m.div>
 
           {/* Keys victory: show both "Start Spelling" and "Play Again" */}
           {!isSpellingVictory && (
-            <motion.div
+            <m.div
               className="flex flex-col items-center gap-3"
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -323,7 +323,7 @@ export function KeyboardEngine() {
               <p className="text-lg text-white/40 font-medium">
                 Ready to start spelling words?
               </p>
-              <motion.button
+              <m.button
                 onClick={handleStartSpelling}
                 className="relative group cursor-pointer"
                 whileHover={{ scale: 1.06 }}
@@ -345,11 +345,11 @@ export function KeyboardEngine() {
                 >
                   Start Spelling Words!
                 </div>
-              </motion.button>
-            </motion.div>
+              </m.button>
+            </m.div>
           )}
 
-          <motion.button
+          <m.button
             onClick={handleStart}
             className="relative group cursor-pointer"
             initial={{ y: 30, opacity: 0 }}
@@ -378,9 +378,9 @@ export function KeyboardEngine() {
             >
               Play Again
             </div>
-          </motion.button>
+          </m.button>
         </div>
-      </>
+      </LazyMotion>
     );
   }
 
@@ -389,11 +389,11 @@ export function KeyboardEngine() {
     const isSpelling = state.mode === "spelling";
 
     return (
-      <>
+      <LazyMotion features={domAnimation} strict>
         <SpaceBackground />
         <div className="flex flex-col items-center justify-center min-h-screen gap-8 px-4 relative z-10">
           {/* Home button */}
-          <motion.button
+          <m.button
             onClick={handleReturnHome}
             className="absolute top-4 left-4 cursor-pointer z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
             style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(8px)" }}
@@ -402,7 +402,7 @@ export function KeyboardEngine() {
           >
             <span className="text-base">🏠</span>
             <span>Home</span>
-          </motion.button>
+          </m.button>
           <AudioToggle
             muted={muted}
             onToggle={handleToggleAudio}
@@ -410,16 +410,16 @@ export function KeyboardEngine() {
           />
 
           {/* Celebration emoji */}
-          <motion.div
+          <m.div
             className="text-8xl"
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 10 }}
           >
             {isPerfect ? "🌟" : "🎉"}
-          </motion.div>
+          </m.div>
 
-          <motion.div
+          <m.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
@@ -441,10 +441,10 @@ export function KeyboardEngine() {
                 ? `You spelled "${state.currentWord.toUpperCase()}"!`
                 : `You typed ${state.letters.length} letters!`}
             </p>
-          </motion.div>
+          </m.div>
 
           {/* Score summary */}
-          <motion.div
+          <m.div
             className="glass-panel px-8 py-5 text-center"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -464,7 +464,7 @@ export function KeyboardEngine() {
               </span>
             </div>
             {isPerfect && (
-              <motion.p
+              <m.p
                 className="text-lg font-semibold mt-2"
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
@@ -476,11 +476,11 @@ export function KeyboardEngine() {
                 }}
               >
                 PERFECT! Bonus: +{state.bonusAwarded.toLocaleString()}
-              </motion.p>
+              </m.p>
             )}
-          </motion.div>
+          </m.div>
 
-          <motion.button
+          <m.button
             onClick={isSpelling ? handleNextWord : handleNextLevel}
             className="relative group cursor-pointer"
             initial={{ y: 30, opacity: 0 }}
@@ -505,15 +505,15 @@ export function KeyboardEngine() {
             >
               {isSpelling ? "Next Word →" : "Next Level →"}
             </div>
-          </motion.button>
+          </m.button>
         </div>
-      </>
+      </LazyMotion>
     );
   }
 
   // Spelling mode: word display above the target letter
   const wordDisplay = state.mode === "spelling" && state.currentWord ? (
-    <motion.div
+    <m.div
       className="glass-panel px-8 py-4"
       initial={{ y: -10, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
@@ -544,15 +544,15 @@ export function KeyboardEngine() {
           </span>
         ))}
       </div>
-    </motion.div>
+    </m.div>
   ) : null;
 
   return (
-    <>
+    <LazyMotion features={domAnimation} strict>
       <SpaceBackground />
       <div className="relative flex flex-col items-center min-h-screen gap-4 px-4 pt-4 pb-4 z-10">
         {/* Home button — top-left corner */}
-        <motion.button
+        <m.button
           onClick={handleReturnHome}
           className="absolute top-4 left-4 cursor-pointer z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
           style={{
@@ -568,7 +568,7 @@ export function KeyboardEngine() {
         >
           <span className="text-base">🏠</span>
           <span>Home</span>
-        </motion.button>
+        </m.button>
         <AudioToggle
           muted={muted}
           onToggle={handleToggleAudio}
@@ -615,7 +615,7 @@ export function KeyboardEngine() {
 
             {/* Progress bar */}
             <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-white/5">
-              <motion.div
+              <m.div
                 className="h-full rounded-full"
                 style={{
                   background: "linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6, #34d399)",
@@ -647,7 +647,7 @@ export function KeyboardEngine() {
 
         {/* Target letter display */}
         <div className="relative flex items-center justify-center" style={{ minHeight: 200 }}>
-          <motion.div
+          <m.div
             key={state.targetLetter + state.currentLetterIndex}
             className="letter-halo"
             initial={{ scale: 0.3, opacity: 0 }}
@@ -673,7 +673,7 @@ export function KeyboardEngine() {
             >
               {state.targetLetter}
             </div>
-          </motion.div>
+          </m.div>
 
           <ParticleExplosion
             active={state.phase === "celebrating"}
@@ -686,7 +686,7 @@ export function KeyboardEngine() {
           {/* Celebration message */}
           <AnimatePresence>
             {state.phase === "celebrating" && state.celebrationMessage && (
-              <motion.div
+              <m.div
                 key="celebration"
                 className="glass-panel px-6 py-3 absolute"
                 initial={{ y: 20, opacity: 0, scale: 0.9 }}
@@ -704,14 +704,14 @@ export function KeyboardEngine() {
                 >
                   {state.celebrationMessage}
                 </p>
-              </motion.div>
+              </m.div>
             )}
           </AnimatePresence>
 
           {/* Wrong-key message */}
           <AnimatePresence>
             {state.wrongKey && state.wrongKeyMessage && (
-              <motion.div
+              <m.div
                 key="wrong"
                 className="glass-panel px-6 py-3 absolute"
                 style={{ borderColor: "rgba(251, 146, 60, 0.25)" }}
@@ -723,7 +723,7 @@ export function KeyboardEngine() {
                 <p className="text-lg md:text-xl font-semibold text-center text-orange-300/90 whitespace-nowrap">
                   {state.wrongKeyMessage}
                 </p>
-              </motion.div>
+              </m.div>
             )}
           </AnimatePresence>
 
@@ -772,6 +772,6 @@ export function KeyboardEngine() {
           pressedKey={state.phase === "celebrating" ? pressedKey : null}
         />
       </div>
-    </>
+    </LazyMotion>
   );
 }

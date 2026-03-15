@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 function VolumeOnIcon({ className }: { className?: string }) {
   return (
@@ -36,7 +36,7 @@ export function AudioToggle({
   const Icon = muted ? VolumeOffIcon : VolumeOnIcon;
 
   return (
-    <motion.button
+    <m.button
       type="button"
       onClick={onToggle}
       aria-pressed={muted}
@@ -75,6 +75,6 @@ export function AudioToggle({
           {muted ? "Muted" : "Sound On"}
         </span>
       </span>
-    </motion.button>
+    </m.button>
   );
 }

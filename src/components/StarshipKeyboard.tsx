@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { ALL_ROWS, type KeyData } from "@/lib/keyboard-layout";
 
 interface StarshipKeyboardProps {
@@ -41,7 +41,7 @@ function KeyCap({
   const depth = 4;
 
   return (
-    <motion.g
+    <m.g
       animate={
         isPressed && isTarget
           ? { y: depth }
@@ -164,7 +164,7 @@ function KeyCap({
       >
         {keyData.label}
       </text>
-    </motion.g>
+    </m.g>
   );
 }
 

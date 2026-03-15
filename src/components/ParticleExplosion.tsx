@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
 
 interface ParticleExplosionProps {
@@ -63,7 +63,7 @@ export function ParticleExplosion({ active, id }: ParticleExplosionProps) {
             const ty = Math.sin(rad) * p.distance;
 
             return (
-              <motion.div
+              <m.div
                 key={`${id}-${i}`}
                 className="absolute"
                 style={{
@@ -94,7 +94,7 @@ export function ParticleExplosion({ active, id }: ParticleExplosionProps) {
           })}
 
           {/* Central flash */}
-          <motion.div
+          <m.div
             className="absolute rounded-full"
             style={{
               width: 100,
