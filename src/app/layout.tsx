@@ -6,6 +6,7 @@ const fredoka = Fredoka({
   subsets: ["latin"],
   variable: "--font-fredoka",
   weight: ["400", "500", "600", "700"],
+  adjustFontFallback: false,
 });
 
 export const metadata = {

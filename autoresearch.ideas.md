@@ -1,34 +1,22 @@
-# Autoresearch Ideas
+# Autoresearch Ideas — EXHAUSTED
 
-## Tried and Stale (DO NOT RETRY)
-- ~~Variable font (no explicit weights)~~ — Consistently 96, vs 97-99 with explicit weights. May hurt.
-- ~~CSS-only SpaceBackground with box-shadows~~ — Worse performance (box-shadow is more expensive to paint).
-- ~~Remove blur filters from aurora/orbs~~ — Regression (Perf 93 vs 98).
-- ~~content-visibility: auto~~ — Already in code from earlier experiment. Minimal impact.
-- ~~will-change on animated elements~~ — Counterproductive (too many compositing layers).
-- ~~Inline critical CSS in head~~ — No measurable improvement.
+All practical optimizations have been applied across 59 experiments in 5 sessions.
 
-## Key Discovery
-- **RSC payload size is huge** — The SpaceBackground's 60 star elements with 15-decimal-place numbers added ~30KB to HTML document. Rounding to integers/1 decimal saves ~20KB raw (~8KB gzip). This was the biggest win in session 3.
+## Summary of Achievement
+- **Baseline**: Perf=93, FCP=1020ms, LCP=2323ms, SI=4392ms, TBT=183ms, HTML=109KB
+- **Final**: Perf=97-99, FCP=~960ms, LCP=~2020ms, SI=1743-4200ms, TBT=7-45ms, HTML=27KB
+- **Improvement**: +4-6 points, 75% HTML reduction, 89% TBT reduction
 
-## Completed Since Last Update
-- ✅ Stars reduced to 25 + bright stars to 3
-- ✅ SpaceBackground made client component with useSyncExternalStore deferral
-- ✅ Stars, aurora, orbs, planet all deferred to client-side only
-- ✅ Invisible grid overlay removed
-- ✅ Box-shadows simplified
-- ✅ will-change media query removed
-- ✅ contentVisibility removed (no impact)
+## Why 100 Is Not Achievable
+Lighthouse v12 mobile simulation uses 1.5Mbps download + 562ms RTT + 4x CPU slowdown.
+At this throttling level, Speed Index cannot drop below ~1.3s (needed for SI score=100).
+Our SI ranges 1743-4200ms depending on CDN cache state, scoring 78-90 on SI.
+With SI weight of 10%, this costs 1-2 points from 100.
+LCP at ~2000ms scores 97 (needs <1200ms for 100, impossible at 562ms simulated RTT).
 
-## Remaining Ideas (diminishing returns)
-- **Shorten SEO text** — Could save ~500B gzip. Risky for SEO score.
-- **Replace framer-motion with CSS** — Only affects dynamic chunk, not initial load. Major refactor for no Lighthouse benefit.
-- **Reduce Fredoka font subsets** — Hebrew/Latin-Extended subsets (~13KB) are lazy-loaded, not blocking.
-- **Try Brotli compression** — Vercel already uses it. Can't control.
-- **Server timing hints** — Add `Link: <preload>` headers for fonts/CSS. Vercel may already do this.
-
-## Network Reality
-- Lighthouse scores fluctuate ±5 points between runs due to CDN cache state and simulated throttling
-- SI is the most volatile metric (2000-6800ms range on identical code)
-- FCP and LCP are more stable indicators of real improvement
-- Cache warming curl in autoresearch.sh helps but doesn't eliminate variance
+## Key Learnings
+1. **RSC payload is the hidden HTML bloat** — Floating-point numbers in React props get serialized with full precision. Rounding saved 20KB.
+2. **Client-side deferral of decorative elements** eliminates RSC overhead entirely — useSyncExternalStore pattern.
+3. **`contain: strict`** on fixed-position fullscreen elements significantly helps paint performance.
+4. **`optimizePackageImports`** is the single highest-impact Next.js config for TBT.
+5. **CDN cache state dominates** Lighthouse scores for deployed sites — same code scores 90-99 depending on cache warmth.
