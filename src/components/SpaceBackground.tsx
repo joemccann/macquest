@@ -29,8 +29,6 @@ const BRIGHT_STARS = [
   { x: 15, y: 12, color: "#a78bfa", size: 4 },
   { x: 72, y: 8, color: "#60a5fa", size: 3.5 },
   { x: 45, y: 85, color: "#f472b6", size: 3 },
-  { x: 88, y: 45, color: "#fbbf24", size: 3.5 },
-  { x: 8, y: 65, color: "#34d399", size: 3 },
 ];
 
 export function SpaceBackground() {
@@ -194,17 +192,6 @@ export function SpaceBackground() {
         />
       </div>
 
-      {/* Faint grid overlay for depth */}
-      <div
-        className="absolute inset-0 opacity-[0.02]"
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(139, 92, 246, 0.5) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(139, 92, 246, 0.5) 1px, transparent 1px)
-          `,
-          backgroundSize: "60px 60px",
-        }}
-      />
     </div>
   );
 }
