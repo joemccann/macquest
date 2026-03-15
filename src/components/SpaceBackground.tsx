@@ -14,12 +14,12 @@ interface Star {
 }
 
 const STARS: Star[] = Array.from({ length: 60 }, (_, i) => ({
-  x: sr(i * 6 + 1) * 100,
-  y: sr(i * 6 + 2) * 100,
-  size: sr(i * 6 + 3) * 2.5 + 0.5,
-  delay: sr(i * 6 + 4) * 6,
-  duration: sr(i * 6 + 5) * 4 + 2,
-  opacity: sr(i * 6 + 6) * 0.6 + 0.2,
+  x: Math.round(sr(i * 6 + 1) * 1000) / 10,
+  y: Math.round(sr(i * 6 + 2) * 1000) / 10,
+  size: Math.round(sr(i * 6 + 3) * 25 + 5) / 10,
+  delay: Math.round(sr(i * 6 + 4) * 60) / 10,
+  duration: Math.round(sr(i * 6 + 5) * 40 + 20) / 10,
+  opacity: Math.round(sr(i * 6 + 6) * 60 + 20) / 100,
 }));
 
 // A few "bright" stars with color
@@ -90,10 +90,10 @@ export function SpaceBackground() {
             top: `${star.y}%`,
             width: star.size,
             height: star.size,
-            backgroundColor: `rgba(255, 255, 255, ${star.opacity})`,
+            backgroundColor: `rgba(255,255,255,${star.opacity})`,
             animationDelay: `${star.delay}s`,
             animationDuration: `${star.duration}s`,
-            boxShadow: star.size > 2 ? `0 0 ${star.size * 2}px rgba(255,255,255,0.3)` : "none",
+            boxShadow: star.size > 2 ? `0 0 ${Math.round(star.size * 2)}px rgba(255,255,255,.3)` : "none",
           }}
         />
       ))}
