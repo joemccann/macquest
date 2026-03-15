@@ -165,3 +165,9 @@ body {
 .animate-buttons-in { animation: buttons-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) 1.3s forwards; opacity: 0; }
 .animate-btn-pulse { animation: btn-pulse 2.5s ease-in-out infinite; }
 
+@keyframes audio-toggle-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-audio-toggle { animation: audio-toggle-in 0.3s ease-out 0.45s forwards; opacity: 0; }
+
