@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Optimize third-party packages for tree-shaking
-  optimizePackageImports: ["framer-motion"],
+  experimental: {
+    // Optimize third-party packages for tree-shaking
+    optimizePackageImports: ["framer-motion"],
+  },
 
   // Enable gzip compression
   compress: true,
