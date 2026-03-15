@@ -55,38 +55,40 @@ export function SpaceBackground() {
         }}
       />
 
-      {/* Aurora / nebula wash — top */}
-      <div
-        className="absolute animate-aurora"
-        style={{
-          top: "-10%",
-          left: "10%",
-          width: "80%",
-          height: "40%",
-          background: `
-            radial-gradient(ellipse at 30% 50%, rgba(139, 92, 246, 0.12) 0%, transparent 70%),
-            radial-gradient(ellipse at 70% 40%, rgba(59, 130, 246, 0.08) 0%, transparent 60%)
-          `,
-          filter: "blur(60px)",
-        }}
-      />
-
-      {/* Aurora / nebula wash — bottom */}
-      <div
-        className="absolute animate-aurora"
-        style={{
-          bottom: "-5%",
-          left: "0%",
-          width: "100%",
-          height: "35%",
-          background: `
-            radial-gradient(ellipse at 60% 50%, rgba(236, 72, 153, 0.1) 0%, transparent 65%),
-            radial-gradient(ellipse at 20% 60%, rgba(139, 92, 246, 0.08) 0%, transparent 55%)
-          `,
-          filter: "blur(50px)",
-          animationDelay: "4s",
-        }}
-      />
+      {/* Aurora / nebula washes — deferred to avoid blur-filter cost on initial paint */}
+      {mounted && (
+        <>
+          <div
+            className="absolute animate-aurora"
+            style={{
+              top: "-10%",
+              left: "10%",
+              width: "80%",
+              height: "40%",
+              background: `
+                radial-gradient(ellipse at 30% 50%, rgba(139, 92, 246, 0.12) 0%, transparent 70%),
+                radial-gradient(ellipse at 70% 40%, rgba(59, 130, 246, 0.08) 0%, transparent 60%)
+              `,
+              filter: "blur(60px)",
+            }}
+          />
+          <div
+            className="absolute animate-aurora"
+            style={{
+              bottom: "-5%",
+              left: "0%",
+              width: "100%",
+              height: "35%",
+              background: `
+                radial-gradient(ellipse at 60% 50%, rgba(236, 72, 153, 0.1) 0%, transparent 65%),
+                radial-gradient(ellipse at 20% 60%, rgba(139, 92, 246, 0.08) 0%, transparent 55%)
+              `,
+              filter: "blur(50px)",
+              animationDelay: "4s",
+            }}
+          />
+        </>
+      )}
 
       {/* Star field — rendered client-side only to reduce SSR HTML size */}
       {mounted && STARS.map((star, i) => (
