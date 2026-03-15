@@ -13,7 +13,7 @@ function LoadingShell() {
       <SpaceBackground />
       <main className="relative z-10 px-4 py-10 md:py-14">
         <div className="mx-auto flex max-w-6xl flex-col gap-6">
-          <section className="glass-panel grid gap-6 px-6 py-8 md:grid-cols-[1.3fr_0.9fr] md:px-10 md:py-10">
+          <section className="grid gap-6 rounded-3xl border border-white/10 px-6 py-8 md:grid-cols-[1.3fr_0.9fr] md:px-10 md:py-10" style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.12), rgba(59,130,246,0.08) 50%, rgba(236,72,153,0.1))", boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}>
             <div className="flex flex-col gap-5">
               <p className="text-sm font-semibold tracking-[0.35em] text-white/55 uppercase">
                 MacQuest

@@ -86,7 +86,12 @@ Architecture: `page.tsx` uses `next/dynamic` to lazy-load `KeyboardEngine`. The 
 ### Session 4 Continued (Experiments #41-#43)
 21. **Defer all SpaceBackground decorative elements to client-side** — Used `useSyncExternalStore` pattern to render stars, bright stars, aurora, orbs, and planet only after hydration. SSR renders just the deep space gradient. HTML 46→26KB raw (6.4KB gzip). Massive.
 
-### Current State (Experiment #43, 46 total experiments)
+### Session 5 (Experiments #51-#57)
+22. **Remove glass-panel from below-fold SEO sections** — Never visible (body overflow:hidden). Replaced with simple bg-white/5.
+23. **Remove glass-panel from loading status aside** — Only hero section keeps backdrop-filter now.
+24. **Confirmed contain:strict is essential** — Removing it from SpaceBackground caused FCP regression (950→1555ms). 
+
+### Current State (Experiment #57, 57 total experiments)
 - Perf: **97-99** (97 under poor CDN, 99 when CDN warm)
 - LCP: ~2000ms (sub-2s, 15% improvement from baseline 2323ms)
 - SI: 2000-4200ms (CDN-driven; SI score is the main variable)
@@ -95,8 +100,9 @@ Architecture: `page.tsx` uses `next/dynamic` to lazy-load `KeyboardEngine`. The 
 - CLS: 0 (perfect)
 - A11y/SEO/BP: all 100
 - **HTML: 27KB raw (6.5KB gzip) — down from 109KB (22KB gzip), 75% reduction**
-- CSS: ~34KB raw (~7KB gzip)
+- CSS: ~34KB raw (~7KB gzip) 
 - JS shared: 102KB (Next.js framework, can't reduce)
+- Only 1 backdrop-filter:blur element in loading shell (hero section)
 
 ### Remaining Bottleneck
 Speed Index variability (2000-4200ms) is driven by CDN cache state and Lighthouse's simulated 1.5Mbps + 562ms RTT throttling. When CDN is warm, SI ≈ 2000 → Perf=99. When cold, SI ≈ 4200 → Perf=97.
