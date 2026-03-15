@@ -3,9 +3,10 @@ set -euo pipefail
 
 URL="https://macquest.app"
 
-# Warm the CDN cache first
+# Warm the CDN cache (hit multiple edge resources)
 curl -s -o /dev/null "$URL"
-sleep 2
+curl -s -o /dev/null "$URL/_next/static/css/$(curl -s "$URL" | grep -o '[a-f0-9]*\.css' | head -1)" 2>/dev/null || true
+sleep 3
 
 # Run Lighthouse and save JSON to temp file
 TMPJSON=$(mktemp /tmp/lighthouse-XXXXXX.json)
