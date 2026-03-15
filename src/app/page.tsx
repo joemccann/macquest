@@ -92,7 +92,6 @@ function LoadingShell() {
           <section
             className="grid gap-4 md:grid-cols-2"
             aria-label="MacQuest game modes"
-            style={{ contentVisibility: "auto", containIntrinsicSize: "0 300px" } as React.CSSProperties}
           >
             {SEO_MODE_CARDS.map((mode) => (
               <article
@@ -112,10 +111,7 @@ function LoadingShell() {
             ))}
           </section>
 
-          <section
-            className="glass-panel px-6 py-6 md:px-8"
-            style={{ contentVisibility: "auto", containIntrinsicSize: "0 250px" } as React.CSSProperties}
-          >
+          <section className="glass-panel px-6 py-6 md:px-8">
             <h2 className="text-2xl font-semibold text-white">
               Why families use MacQuest
             </h2>
