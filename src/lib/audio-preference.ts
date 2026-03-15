@@ -1,87 +1,43 @@
-const STORAGE_KEY = "macquest-muted";
+const KEY = "macquest-muted";
 export const AUDIO_PREFERENCE_EVENT = "macquest-audio-preference-changed";
+let _raw: string | null | undefined;
+let _muted = false;
 
-let cachedMutedRaw: string | null | undefined;
-let cachedMutedPreference = false;
-
-function getStorage(): Storage | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
-}
-
-function emitAudioPreferenceChange(): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  window.dispatchEvent(new Event(AUDIO_PREFERENCE_EVENT));
+function ls(): Storage | null {
+  try { return typeof window !== "undefined" ? window.localStorage : null; } catch { return null; }
 }
 
 export function loadMutedPreference(): boolean {
   try {
-    const storage = getStorage();
-    if (!storage) return false;
-
-    const raw = storage.getItem(STORAGE_KEY);
-    if (raw === cachedMutedRaw) {
-      return cachedMutedPreference;
-    }
-
-    cachedMutedRaw = raw;
-
-    if (!raw) {
-      cachedMutedPreference = false;
-      return false;
-    }
-
-    const parsed = JSON.parse(raw);
-    cachedMutedPreference = parsed === true;
-    return cachedMutedPreference;
-  } catch {
-    cachedMutedRaw = null;
-    cachedMutedPreference = false;
-    return false;
-  }
+    const s = ls();
+    if (!s) return false;
+    const raw = s.getItem(KEY);
+    if (raw === _raw) return _muted;
+    _raw = raw;
+    _muted = raw ? JSON.parse(raw) === true : false;
+    return _muted;
+  } catch { _raw = null; _muted = false; return false; }
 }
 
 export function saveMutedPreference(muted: boolean): void {
   try {
-    const storage = getStorage();
-    if (!storage) return;
-
+    const s = ls();
+    if (!s) return;
     const raw = JSON.stringify(muted);
-    storage.setItem(STORAGE_KEY, raw);
-    cachedMutedRaw = raw;
-    cachedMutedPreference = muted;
-    emitAudioPreferenceChange();
-  } catch {
-    // Silent failure — audio still works without persisted preferences
-  }
+    s.setItem(KEY, raw);
+    _raw = raw;
+    _muted = muted;
+    window.dispatchEvent(new Event(AUDIO_PREFERENCE_EVENT));
+  } catch { /* silent */ }
 }
 
 export function subscribeToMutedPreference(onStoreChange: () => void) {
-  if (typeof window === "undefined") {
-    return () => {};
-  }
-
-  const handleStorage = (event: StorageEvent) => {
-    if (event.key === STORAGE_KEY || event.key === null) {
-      onStoreChange();
-    }
-  };
-
-  window.addEventListener("storage", handleStorage);
+  if (typeof window === "undefined") return () => {};
+  const h = (e: StorageEvent) => { if (e.key === KEY || e.key === null) onStoreChange(); };
+  window.addEventListener("storage", h);
   window.addEventListener(AUDIO_PREFERENCE_EVENT, onStoreChange);
-
   return () => {
-    window.removeEventListener("storage", handleStorage);
+    window.removeEventListener("storage", h);
     window.removeEventListener(AUDIO_PREFERENCE_EVENT, onStoreChange);
   };
 }
