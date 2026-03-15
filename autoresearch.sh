@@ -3,6 +3,10 @@ set -euo pipefail
 
 URL="https://macquest.app"
 
+# Warm the CDN cache first
+curl -s -o /dev/null "$URL"
+sleep 2
+
 # Run Lighthouse and save JSON to temp file
 TMPJSON=$(mktemp /tmp/lighthouse-XXXXXX.json)
 trap "rm -f $TMPJSON" EXIT
