@@ -284,11 +284,7 @@ export function KeyboardEngine() {
 
   // Spelling mode: word display above the target letter
   const wordDisplay = state.mode === "spelling" && state.currentWord ? (
-    <m.div
-      className="glass-panel px-8 py-4"
-      initial={{ y: -10, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-    >
+    <div className="glass-panel px-8 py-4 animate-word-in">
       <div className="flex items-center justify-center gap-2 md:gap-3">
         {state.currentWord.toUpperCase().split("").map((letter, i) => (
           <span
@@ -315,7 +311,7 @@ export function KeyboardEngine() {
           </span>
         ))}
       </div>
-    </m.div>
+    </div>
   ) : null;
 
   return (
@@ -381,16 +377,14 @@ export function KeyboardEngine() {
 
             {/* Progress bar */}
             <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-white/5">
-              <m.div
-                className="h-full rounded-full"
+              <div
+                className="h-full rounded-full transition-[width] duration-500 ease-out"
                 style={{
+                  width: `${progress}%`,
                   background: "linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6, #34d399)",
                   backgroundSize: "200% 100%",
                   boxShadow: "0 0 12px rgba(139, 92, 246, 0.4)",
                 }}
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
               />
               {/* Shimmer overlay */}
               <div

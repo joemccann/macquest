@@ -177,3 +177,9 @@ body {
 }
 .animate-home-btn { animation: home-btn-in 0.3s ease-out 0.5s forwards; opacity: 0; }
 
+@keyframes word-in {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-word-in { animation: word-in 0.3s ease-out forwards; }
+
