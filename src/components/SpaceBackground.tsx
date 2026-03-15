@@ -13,12 +13,12 @@ interface Star {
   opacity: number;
 }
 
-const STARS: Star[] = Array.from({ length: 60 }, (_, i) => ({
-  x: Math.round(sr(i * 6 + 1) * 1000) / 10,
-  y: Math.round(sr(i * 6 + 2) * 1000) / 10,
+const STARS: Star[] = Array.from({ length: 40 }, (_, i) => ({
+  x: Math.round(sr(i * 6 + 1) * 100),
+  y: Math.round(sr(i * 6 + 2) * 100),
   size: Math.round(sr(i * 6 + 3) * 25 + 5) / 10,
-  delay: Math.round(sr(i * 6 + 4) * 60) / 10,
-  duration: Math.round(sr(i * 6 + 5) * 40 + 20) / 10,
+  delay: Math.round(sr(i * 6 + 4) * 6),
+  duration: Math.round(sr(i * 6 + 5) * 4 + 2),
   opacity: Math.round(sr(i * 6 + 6) * 60 + 20) / 100,
 }));
 
