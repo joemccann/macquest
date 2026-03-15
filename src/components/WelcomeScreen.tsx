@@ -282,35 +282,27 @@ export function WelcomeScreen({ onStart, onStartSpelling, onResume, savedLevel, 
         )}
       </AnimatePresence>
 
-      {/* Floating decorative elements */}
-      <motion.div
-        className="absolute top-[12%] left-[8%] text-4xl"
-        animate={{ y: [0, -15, 0], rotate: [0, 10, 0] }}
-        transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
+      {/* Floating decorative elements — CSS-only animations */}
+      <div
+        className="absolute top-[12%] left-[8%] text-4xl animate-decor-1"
       >
         ✨
-      </motion.div>
-      <motion.div
-        className="absolute top-[18%] right-[12%] text-3xl"
-        animate={{ y: [0, -10, 0], rotate: [0, -8, 0] }}
-        transition={{ repeat: Infinity, duration: 4, ease: "easeInOut", delay: 1 }}
+      </div>
+      <div
+        className="absolute top-[18%] right-[12%] text-3xl animate-decor-2"
       >
         ⭐
-      </motion.div>
-      <motion.div
-        className="absolute bottom-[15%] left-[15%] text-3xl"
-        animate={{ y: [0, -12, 0], rotate: [0, 15, 0] }}
-        transition={{ repeat: Infinity, duration: 6, ease: "easeInOut", delay: 2 }}
+      </div>
+      <div
+        className="absolute bottom-[15%] left-[15%] text-3xl animate-decor-3"
       >
         🌟
-      </motion.div>
-      <motion.div
-        className="absolute bottom-[20%] right-[8%] text-4xl"
-        animate={{ y: [0, -8, 0], rotate: [0, -5, 0] }}
-        transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut", delay: 0.5 }}
+      </div>
+      <div
+        className="absolute bottom-[20%] right-[8%] text-4xl animate-decor-4"
       >
         🪐
-      </motion.div>
+      </div>
     </div>
   );
 }
