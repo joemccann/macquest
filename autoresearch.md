@@ -77,8 +77,9 @@ Minimize the First Load JS bundle size for the main page (/) of MacQuest — a N
 - Moving `optimizePackageImports` to correct config location — actually slightly worse
 
 ### Current State
-- First Load JS: 142 KB (was 156 KB, -9.0%)
-- Page chunk: 39.4 KB (was 54.3 KB, -27.4%)
+- First Load JS: **114 KB** (was 156 KB, **-26.9%**)
+- Page chunk: **11.4 KB** (was 54.3 KB, **-79%**)
 - Shared chunks: 102 KB (unchanged — Next.js + React runtime)
-- Components still using framer-motion: KeyboardEngine (m.div for letter animations, progress bar, word display), StarshipKeyboard (m.g for key animations)
-- Components freed from framer-motion: WelcomeScreen, AudioToggle, AboutModal (lazy), VictoryScreen (lazy), LevelCompleteScreen (lazy), ParticleExplosion (lazy)
+- **framer-motion is ZERO in the initial bundle** — fully deferred to lazy-loaded components
+- All components in the initial render path use CSS animations exclusively
+- framer-motion only loads when: VictoryScreen, LevelCompleteScreen, ParticleExplosion, or AboutModal are shown

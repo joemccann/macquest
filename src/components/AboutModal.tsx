@@ -1,30 +1,20 @@
 "use client";
 
-import { LazyMotion, domAnimation, m } from "framer-motion";
-
 interface AboutModalProps {
   onClose: () => void;
 }
 
 export function AboutModal({ onClose }: AboutModalProps) {
   return (
-    <LazyMotion features={domAnimation}>
-    <m.div
-      className="fixed inset-0 z-30 flex items-center justify-center bg-[#050714]/78 px-4 py-6 backdrop-blur-md"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+    <div
+      className="fixed inset-0 z-30 flex items-center justify-center bg-[#050714]/78 px-4 py-6 backdrop-blur-md animate-modal-backdrop"
       onClick={onClose}
     >
-      <m.section
+      <section
         role="dialog"
         aria-modal="true"
         aria-labelledby="macquest-about-title"
-        className="glass-panel relative w-full max-w-3xl overflow-hidden"
-        initial={{ opacity: 0, y: 28, scale: 0.96 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 18, scale: 0.98 }}
-        transition={{ duration: 0.22, ease: "easeOut" }}
+        className="glass-panel relative w-full max-w-3xl overflow-hidden animate-modal-content"
         onClick={(event) => event.stopPropagation()}
       >
         <button
@@ -135,12 +125,10 @@ export function AboutModal({ onClose }: AboutModalProps) {
           </p>
 
           <div className="mt-7 flex justify-end">
-            <m.button
+            <button
               type="button"
               onClick={onClose}
-              className="relative cursor-pointer"
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.97 }}
+              className="relative cursor-pointer transition-transform hover:scale-[1.04] active:scale-[0.97]"
             >
               <div
                 className="absolute -inset-2 rounded-full opacity-45"
@@ -158,11 +146,10 @@ export function AboutModal({ onClose }: AboutModalProps) {
               >
                 Back to the cockpit
               </div>
-            </m.button>
+            </button>
           </div>
         </div>
-      </m.section>
-    </m.div>
-    </LazyMotion>
+      </section>
+    </div>
   );
 }

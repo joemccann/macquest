@@ -1,6 +1,5 @@
 "use client";
 
-import { LazyMotion, domAnimation, m } from "framer-motion";
 import { AudioToggle } from "./AudioToggle";
 
 interface LevelCompleteScreenProps {
@@ -29,41 +28,26 @@ export function LevelCompleteScreen({
   onNext,
 }: LevelCompleteScreenProps) {
   return (
-    <LazyMotion features={domAnimation}>
     <div className="flex flex-col items-center justify-center min-h-screen gap-8 px-4 relative z-10">
-      {/* Home button */}
-      <m.button
+      <button
         onClick={onReturnHome}
-        className="absolute top-4 left-4 cursor-pointer z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
+        className="absolute top-4 left-4 cursor-pointer z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-white/40 hover:text-white/70 transition-all hover:scale-[1.06] active:scale-[0.94] animate-home-btn"
         style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(8px)" }}
-        whileHover={{ scale: 1.06 }}
-        whileTap={{ scale: 0.94 }}
       >
         <span className="text-base">🏠</span>
         <span>Home</span>
-      </m.button>
+      </button>
       <AudioToggle
         muted={muted}
         onToggle={onToggleAudio}
         className="absolute top-4 right-4 z-20"
       />
 
-      {/* Celebration emoji */}
-      <m.div
-        className="text-8xl"
-        initial={{ scale: 0, rotate: -180 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ type: "spring", stiffness: 200, damping: 10 }}
-      >
+      <div className="text-8xl animate-victory-emoji">
         {isPerfect ? "🌟" : "🎉"}
-      </m.div>
+      </div>
 
-      <m.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
-        className="text-center"
-      >
+      <div className="text-center animate-victory-title">
         <h2
           className="text-5xl md:text-7xl font-bold mb-3"
           style={{
@@ -80,15 +64,9 @@ export function LevelCompleteScreen({
             ? `You spelled "${currentWord.toUpperCase()}"!`
             : `You typed ${lettersLength} letters!`}
         </p>
-      </m.div>
+      </div>
 
-      {/* Score summary */}
-      <m.div
-        className="glass-panel px-8 py-5 text-center"
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.4 }}
-      >
+      <div className="glass-panel px-8 py-5 text-center animate-victory-score">
         <div className="flex items-center justify-center gap-2 mb-1">
           <span className="text-2xl">⭐</span>
           <span
@@ -103,11 +81,8 @@ export function LevelCompleteScreen({
           </span>
         </div>
         {isPerfect && (
-          <m.p
-            className="text-lg font-semibold mt-2"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", delay: 0.6 }}
+          <p
+            className="text-lg font-semibold mt-2 animate-victory-perfect"
             style={{
               background: "linear-gradient(135deg, #34d399, #38bdf8)",
               WebkitBackgroundClip: "text",
@@ -115,25 +90,17 @@ export function LevelCompleteScreen({
             }}
           >
             PERFECT! Bonus: +{bonusAwarded.toLocaleString()}
-          </m.p>
+          </p>
         )}
-      </m.div>
+      </div>
 
-      <m.button
+      <button
         onClick={onNext}
-        className="relative group cursor-pointer"
-        initial={{ y: 30, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.6 }}
-        whileHover={{ scale: 1.06 }}
-        whileTap={{ scale: 0.94 }}
+        className="relative group cursor-pointer transition-transform hover:scale-[1.06] active:scale-[0.94] animate-victory-action1"
       >
         <div
           className="absolute -inset-2 rounded-full opacity-50 group-hover:opacity-70 transition-opacity"
-          style={{
-            background: "linear-gradient(135deg, #34d399, #3b82f6)",
-            filter: "blur(14px)",
-          }}
+          style={{ background: "linear-gradient(135deg, #34d399, #3b82f6)", filter: "blur(14px)" }}
         />
         <div
           className="relative px-14 py-5 rounded-full text-2xl font-bold text-white"
@@ -144,8 +111,7 @@ export function LevelCompleteScreen({
         >
           {isSpelling ? "Next Word →" : "Next Level →"}
         </div>
-      </m.button>
+      </button>
     </div>
-    </LazyMotion>
   );
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { LazyMotion, domAnimation, m } from "framer-motion";
 import { AudioToggle } from "./AudioToggle";
 
 interface VictoryScreenProps {
@@ -27,40 +26,26 @@ export function VictoryScreen({
   onStart,
 }: VictoryScreenProps) {
   return (
-    <LazyMotion features={domAnimation}>
     <div className="flex flex-col items-center justify-center min-h-screen gap-8 px-4 relative z-10">
-      {/* Home button */}
-      <m.button
+      <button
         onClick={onReturnHome}
-        className="absolute top-4 left-4 cursor-pointer z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
+        className="absolute top-4 left-4 cursor-pointer z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-white/40 hover:text-white/70 transition-all hover:scale-[1.06] active:scale-[0.94] animate-home-btn"
         style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(8px)" }}
-        whileHover={{ scale: 1.06 }}
-        whileTap={{ scale: 0.94 }}
       >
         <span className="text-base">🏠</span>
         <span>Home</span>
-      </m.button>
+      </button>
       <AudioToggle
         muted={muted}
         onToggle={onToggleAudio}
         className="absolute top-4 right-4 z-20"
       />
 
-      <m.div
-        className="text-8xl"
-        initial={{ scale: 0, rotate: -180 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ type: "spring", stiffness: 200, damping: 10 }}
-      >
+      <div className="text-8xl animate-victory-emoji">
         {isSpelling ? "🎓" : "🏆"}
-      </m.div>
+      </div>
 
-      <m.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
-        className="text-center"
-      >
+      <div className="text-center animate-victory-title">
         <h2
           className="text-5xl md:text-7xl font-bold mb-3"
           style={{
@@ -77,14 +62,9 @@ export function VictoryScreen({
             ? "You spelled all 100 words!"
             : "You mastered the entire keyboard!"}
         </p>
-      </m.div>
+      </div>
 
-      <m.div
-        className="glass-panel px-10 py-6 text-center"
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.4 }}
-      >
+      <div className="glass-panel px-10 py-6 text-center animate-victory-score">
         <p className="text-sm text-white/40 mb-1">Final Score</p>
         <div className="flex items-center justify-center gap-2">
           <span className="text-3xl">⭐</span>
@@ -104,31 +84,20 @@ export function VictoryScreen({
             {perfectLevels.length} perfect {mode === "spelling" ? "word" : "level"}{perfectLevels.length !== 1 ? "s" : ""}!
           </p>
         )}
-      </m.div>
+      </div>
 
-      {/* Keys victory: show both "Start Spelling" and "Play Again" */}
       {!isSpelling && (
-        <m.div
-          className="flex flex-col items-center gap-3"
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.6 }}
-        >
+        <div className="flex flex-col items-center gap-3 animate-victory-action1">
           <p className="text-lg text-white/40 font-medium">
             Ready to start spelling words?
           </p>
-          <m.button
+          <button
             onClick={onStartSpelling}
-            className="relative group cursor-pointer"
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.94 }}
+            className="relative group cursor-pointer transition-transform hover:scale-[1.06] active:scale-[0.94]"
           >
             <div
               className="absolute -inset-2 rounded-full opacity-50 group-hover:opacity-70 transition-opacity"
-              style={{
-                background: "linear-gradient(135deg, #34d399, #3b82f6)",
-                filter: "blur(14px)",
-              }}
+              style={{ background: "linear-gradient(135deg, #34d399, #3b82f6)", filter: "blur(14px)" }}
             />
             <div
               className="relative px-14 py-5 rounded-full text-2xl font-bold text-white"
@@ -139,25 +108,17 @@ export function VictoryScreen({
             >
               Start Spelling Words!
             </div>
-          </m.button>
-        </m.div>
+          </button>
+        </div>
       )}
 
-      <m.button
+      <button
         onClick={onStart}
-        className="relative group cursor-pointer"
-        initial={{ y: 30, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: isSpelling ? 0.8 : 1.0 }}
-        whileHover={{ scale: 1.06 }}
-        whileTap={{ scale: 0.94 }}
+        className="relative group cursor-pointer transition-transform hover:scale-[1.06] active:scale-[0.94] animate-victory-action2"
       >
         <div
           className="absolute -inset-2 rounded-full opacity-50 group-hover:opacity-70 transition-opacity"
-          style={{
-            background: "linear-gradient(135deg, #f472b6, #c084fc, #38bdf8)",
-            filter: "blur(14px)",
-          }}
+          style={{ background: "linear-gradient(135deg, #f472b6, #c084fc, #38bdf8)", filter: "blur(14px)" }}
         />
         <div
           className="relative px-14 py-5 rounded-full text-2xl font-bold text-white"
@@ -172,8 +133,7 @@ export function VictoryScreen({
         >
           Play Again
         </div>
-      </m.button>
+      </button>
     </div>
-    </LazyMotion>
   );
 }
