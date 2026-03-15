@@ -13,7 +13,7 @@ function LoadingShell() {
       <SpaceBackground />
       <main className="relative z-10 px-4 py-10 md:py-14">
         <div className="mx-auto flex max-w-6xl flex-col gap-6">
-          <section className="glass-panel grid gap-6 px-6 py-8 md:grid-cols-[1.3fr_0.9fr] md:px-10 md:py-10">
+          <section className="grid gap-6 rounded-3xl border border-white/10 px-6 py-8 md:grid-cols-[1.3fr_0.9fr] md:px-10 md:py-10" style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.12), rgba(59,130,246,0.08) 50%, rgba(236,72,153,0.1))", boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}>
             <div className="flex flex-col gap-5">
               <p className="text-sm font-semibold tracking-[0.35em] text-white/55 uppercase">
                 MacQuest
@@ -26,7 +26,6 @@ function LoadingShell() {
                       "linear-gradient(135deg, #f472b6 0%, #c084fc 25%, #818cf8 50%, #38bdf8 75%, #34d399 100%)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
-                    filter: "drop-shadow(0 4px 24px rgba(139, 92, 246, 0.28))",
                   }}
                 >
                   Typing and spelling practice for kids on a MacBook Pro
@@ -49,7 +48,7 @@ function LoadingShell() {
               </ul>
             </div>
 
-            <aside className="glass-panel flex flex-col gap-4 border border-white/6 px-5 py-5 text-left">
+            <aside className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 px-5 py-5 text-left">
               <div className="flex items-center gap-3">
                 <div
                   className="text-4xl"
@@ -97,22 +96,22 @@ function LoadingShell() {
             {SEO_MODE_CARDS.map((mode) => (
               <article
                 key={mode.title}
-                className="glass-panel flex flex-col gap-3 px-6 py-6"
+                className="rounded-3xl border border-white/10 bg-white/5 px-6 py-6"
               >
                 <h2 className="text-2xl font-semibold text-white">
                   {mode.title}
                 </h2>
-                <p className="text-base leading-relaxed text-white/72">
+                <p className="mt-3 text-base leading-relaxed text-white/72">
                   {mode.summary}
                 </p>
-                <p className="text-sm leading-relaxed text-white/58">
+                <p className="mt-2 text-sm leading-relaxed text-white/58">
                   {mode.detail}
                 </p>
               </article>
             ))}
           </section>
 
-          <section className="glass-panel px-6 py-6 md:px-8">
+          <section className="rounded-3xl border border-white/10 bg-white/5 px-6 py-6 md:px-8">
             <h2 className="text-2xl font-semibold text-white">
               Why families use MacQuest
             </h2>
