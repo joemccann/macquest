@@ -32,7 +32,9 @@ const WelcomeScreen = lazy(() =>
   import("./WelcomeScreen").then((m) => ({ default: m.WelcomeScreen }))
 );
 import { SpaceBackground } from "./SpaceBackground";
-import { AudioToggle } from "./AudioToggle";
+const AudioToggle = lazy(() =>
+  import("./AudioToggle").then((m) => ({ default: m.AudioToggle }))
+);
 // Lazy-load server action — only called during gameplay
 const generatePhrase = () =>
   import("@/app/actions/generate-phrase").then((m) => m.generatePhrase());
@@ -228,11 +230,13 @@ export function KeyboardEngine() {
       <>
         <SpaceBackground />
         <div className="relative min-h-screen">
-          <AudioToggle
-            muted={muted}
-            onToggle={handleToggleAudio}
-            className="absolute top-4 right-4 z-20"
-          />
+          <Suspense fallback={null}>
+            <AudioToggle
+              muted={muted}
+              onToggle={handleToggleAudio}
+              className="absolute top-4 right-4 z-20"
+            />
+          </Suspense>
           <Suspense fallback={null}>
             <WelcomeScreen
               onStart={handleStart}
@@ -339,11 +343,13 @@ export function KeyboardEngine() {
           <span className="text-base">🏠</span>
           <span>Home</span>
         </button>
-        <AudioToggle
-          muted={muted}
-          onToggle={handleToggleAudio}
-          className="absolute top-4 right-4 z-20"
-        />
+        <Suspense fallback={null}>
+          <AudioToggle
+            muted={muted}
+            onToggle={handleToggleAudio}
+            className="absolute top-4 right-4 z-20"
+          />
+        </Suspense>
 
         {/* Header bar — pinned near top */}
         <div className="w-full max-w-2xl">
