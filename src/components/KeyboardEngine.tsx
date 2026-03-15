@@ -28,7 +28,9 @@ const StarshipKeyboard = lazy(() =>
 const ParticleExplosion = lazy(() =>
   import("./ParticleExplosion").then((m) => ({ default: m.ParticleExplosion }))
 );
-import { WelcomeScreen } from "./WelcomeScreen";
+const WelcomeScreen = lazy(() =>
+  import("./WelcomeScreen").then((m) => ({ default: m.WelcomeScreen }))
+);
 import { SpaceBackground } from "./SpaceBackground";
 import { AudioToggle } from "./AudioToggle";
 // Lazy-load server action — only called during gameplay
@@ -231,13 +233,15 @@ export function KeyboardEngine() {
             onToggle={handleToggleAudio}
             className="absolute top-4 right-4 z-20"
           />
-          <WelcomeScreen
-            onStart={handleStart}
-            onStartSpelling={handleStartSpelling}
-            onResume={savedGame ? handleResume : undefined}
-            savedLevel={savedGame ? savedGame.currentLevel + 1 : undefined}
-            savedScore={savedGame?.score}
-          />
+          <Suspense fallback={null}>
+            <WelcomeScreen
+              onStart={handleStart}
+              onStartSpelling={handleStartSpelling}
+              onResume={savedGame ? handleResume : undefined}
+              savedLevel={savedGame ? savedGame.currentLevel + 1 : undefined}
+              savedScore={savedGame?.score}
+            />
+          </Suspense>
         </div>
       </>
     );
