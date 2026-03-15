@@ -55,12 +55,6 @@ body {
   pointer-events: none;
 }
 
-/* 3D candy key base style */
-.candy-key {
-  border-radius: 10px;
-  transition: all 0.15s ease;
-}
-
 /* Keyboard body glow */
 .keyboard-body {
   background: linear-gradient(
@@ -102,5 +96,4 @@ body {
   50% { opacity: 0.6; transform: translateY(-10px) scaleX(1.1); }
   100% { opacity: 0.3; transform: translateY(0) scaleX(1); }
 }
-
 

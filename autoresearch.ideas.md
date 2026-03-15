@@ -11,11 +11,21 @@
 ## Key Discovery
 - **RSC payload size is huge** — The SpaceBackground's 60 star elements with 15-decimal-place numbers added ~30KB to HTML document. Rounding to integers/1 decimal saves ~20KB raw (~8KB gzip). This was the biggest win in session 3.
 
-## Still Promising
-- **Further reduce star count** — Each star saves ~300B RSC payload + DOM node. Currently at 40, could try 25-30.
-- **Replace framer-motion with CSS animations** — NOT for performance (it's in dynamic chunk), but for reducing the dynamic chunk size (124KB → could be ~80KB). Only helps load time of interactive mode, not Lighthouse.
-- **Reduce SEO text verbosity** — The loading shell duplicates text in both rendered HTML and RSC payload. Shorter SEO text = smaller document.
-- **Move SpaceBackground back to client component** — As a server component, stars get serialized in RSC payload. As a client component, the star generation happens on the client with no RSC overhead. BUT the rendering would be delayed. Trade-off worth testing.
+## Completed Since Last Update
+- ✅ Stars reduced to 25 + bright stars to 3
+- ✅ SpaceBackground made client component with useSyncExternalStore deferral
+- ✅ Stars, aurora, orbs, planet all deferred to client-side only
+- ✅ Invisible grid overlay removed
+- ✅ Box-shadows simplified
+- ✅ will-change media query removed
+- ✅ contentVisibility removed (no impact)
+
+## Remaining Ideas (diminishing returns)
+- **Shorten SEO text** — Could save ~500B gzip. Risky for SEO score.
+- **Replace framer-motion with CSS** — Only affects dynamic chunk, not initial load. Major refactor for no Lighthouse benefit.
+- **Reduce Fredoka font subsets** — Hebrew/Latin-Extended subsets (~13KB) are lazy-loaded, not blocking.
+- **Try Brotli compression** — Vercel already uses it. Can't control.
+- **Server timing hints** — Add `Link: <preload>` headers for fonts/CSS. Vercel may already do this.
 
 ## Network Reality
 - Lighthouse scores fluctuate ±5 points between runs due to CDN cache state and simulated throttling

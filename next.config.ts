@@ -10,8 +10,6 @@ const nextConfig: NextConfig = {
   // Remove X-Powered-By header
   poweredByHeader: false,
 
-
-
   // Security & performance headers
   headers: async () => [
     {

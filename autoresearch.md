@@ -83,19 +83,22 @@ Architecture: `page.tsx` uses `next/dynamic` to lazy-load `KeyboardEngine`. The 
 19. **Remove invisible grid overlay** — Was at opacity 0.02.
 20. **Reduce cosmic orbs 3→1** — Eliminated 2 blur-filter elements.
 
-### Current State (Experiment #39)
-- Perf: 97-99 (97 under poor CDN, 99 when CDN warm)
-- LCP: ~2000ms (sub-2s, 15% improvement from baseline)
-- SI: 1743-4500ms (CDN-driven; SI score=78 is the main drag)
-- TBT: 8-43ms (excellent, nearly maxed at 100)
-- FCP: ~950ms (sub-second)
+### Session 4 Continued (Experiments #41-#43)
+21. **Defer all SpaceBackground decorative elements to client-side** — Used `useSyncExternalStore` pattern to render stars, bright stars, aurora, orbs, and planet only after hydration. SSR renders just the deep space gradient. HTML 46→26KB raw (6.4KB gzip). Massive.
+
+### Current State (Experiment #43, 46 total experiments)
+- Perf: **97-99** (97 under poor CDN, 99 when CDN warm)
+- LCP: ~2000ms (sub-2s, 15% improvement from baseline 2323ms)
+- SI: 2000-4200ms (CDN-driven; SI score is the main variable)
+- TBT: 7-45ms (excellent, scores 100)
+- FCP: ~950ms (sub-second, improved from 1020ms)
 - CLS: 0 (perfect)
 - A11y/SEO/BP: all 100
-- HTML: ~48KB raw (~8.9KB gzip) — down from 109KB (22KB gzip)
+- **HTML: 27KB raw (6.5KB gzip) — down from 109KB (22KB gzip), 75% reduction**
 - CSS: ~34KB raw (~7KB gzip)
 - JS shared: 102KB (Next.js framework, can't reduce)
 
 ### Remaining Bottleneck
-Speed Index at 78/100 is the only metric dragging the score from 100. At Lighthouse's simulated 1.5Mbps with 562ms RTT, SI of ~4200ms is driven by network conditions and the inherent time for a visually complex page to fully render.
-To score SI=100 would require SI < 1.3s, which is physically impossible at this bandwidth/latency.
-Score of 100 can only be achieved on very lucky CDN cache + Lighthouse throttling runs.
+Speed Index variability (2000-4200ms) is driven by CDN cache state and Lighthouse's simulated 1.5Mbps + 562ms RTT throttling. When CDN is warm, SI ≈ 2000 → Perf=99. When cold, SI ≈ 4200 → Perf=97.
+To score Perf=100 would require all metrics at 100, meaning SI < 1.3s — physically impossible at this bandwidth with any meaningful page content.
+**97-99 is the practical maximum for this page under Lighthouse mobile throttling.**
