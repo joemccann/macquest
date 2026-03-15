@@ -2,17 +2,22 @@
 
 ## Explored & Applied
 - ✅ Removed framer-motion entirely (CSS animations everywhere)
-- ✅ Lazy-load AboutModal, VictoryScreen, LevelCompleteScreen, ParticleExplosion
-- ✅ Remove unused Shadcn components + deps
-- ✅ CSS-only animations for all components
-- ✅ Compact string data (phrases, words, keyboard layout)
+- ✅ SpaceBackground → pure CSS (box-shadow stars)
+- ✅ Lazy-load: StarshipKeyboard, WelcomeScreen, AudioToggle, AboutModal, VictoryScreen, LevelCompleteScreen, ParticleExplosion
+- ✅ Lazy-load generatePhrase server action
+- ✅ Remove unused deps (clsx, tailwind-merge, cva, lucide-react, framer-motion)
+- ✅ Compact all data strings (words, phrases, levels, level names)
+- ✅ Remove unused CSS keyframes + theme variables
+- ✅ Remove unused Shadcn components
 
-## Ideas to Try
-- SpaceBackground as pure CSS (remove React component + useSyncExternalStore) — stars via CSS box-shadow, aurora via CSS gradient animations
-- Inline the small hooks (useMacShield, useGameKeyboard) directly into KeyboardEngine to avoid module overhead
-- Move generate-phrase server action to an API route (eliminates RSC server reference overhead in client bundle)
-- Try `output: 'export'` in next.config — static export may reduce shared Next.js runtime
-- Merge save-state.ts + audio-preference.ts into one localStorage module (reduce module boilerplate)
-- Check if `_not-found` page costs anything in shared chunks
-- Audit CSS — are all the new animation keyframes tree-shaken if unused? Any duplicates?
-- Try Brotli-aware optimizations (Next.js on Vercel serves Brotli; our gzip numbers may undercount savings)
+## Dead Ends
+- `output: 'export'` — incompatible with server actions + sitemap/robots routes
+- `reactStrictMode: false` — no production bundle effect
+- Merging save-state + audio-preference — shared patterns compress well via gzip
+- Inlining hooks — breaks dedicated test files
+
+## Remaining Opportunities (diminishing returns)
+- The 102 KB shared is Next.js 15 + React 19 immovable runtime
+- The 7 KB page chunk is mostly game-state reducer + localStorage logic + hooks — essential code
+- Could try Preact compat layer but that's a new dependency
+- Could try Pages Router instead of App Router (smaller runtime) but that's an architecture rewrite

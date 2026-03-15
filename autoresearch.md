@@ -76,11 +76,15 @@ Minimize the First Load JS bundle size for the main page (/) of MacQuest — a N
 - Reducing particle count — runtime data, not code size
 - Moving `optimizePackageImports` to correct config location — actually slightly worse
 
-### Current State
-- First Load JS: **114 KB** (was 156 KB, **-26.9%**)
-- Page chunk: **11.3 KB** (was 54.3 KB, **-79%**)
-- Total JS gz: **246.1 KB** (was 283.9 KB, **-13.3%**)
-- Shared chunks: 102 KB (unchanged — Next.js + React runtime, the practical floor)
+### Current State (34 experiments)
+- First Load JS: **109 KB** (was 156 KB, **-30.1%**)
+- Page chunk: **7 KB** (was 54.3 KB, **-87.1%**)
+- Total JS gz: **247.5 KB** (was 283.9 KB, **-12.8%**)
+- Shared chunks: 102 KB (unchanged — Next.js + React runtime, the immovable floor)
 - **framer-motion completely removed** — zero animation library dependency
+- SpaceBackground converted to pure CSS (box-shadow stars, gradient background)
 - All animations use CSS keyframes + transitions
+- Lazy-loaded: StarshipKeyboard, WelcomeScreen, AudioToggle, AboutModal, VictoryScreen, LevelCompleteScreen, ParticleExplosion, generatePhrase server action
 - `react`, `react-dom`, `next`, `ai`, `@ai-sdk/anthropic` are the only runtime deps
+- The 7 KB page chunk contains: game state reducer, save-state, audio-preference, hooks, phrases, words, spelling-audio, lazy-load stubs
+- 102 KB shared is Next.js 15 + React 19 runtime — irreducible without framework changes

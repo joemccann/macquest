@@ -38,14 +38,15 @@ const AudioToggle = lazy(() =>
 // Lazy-load server action — only called during gameplay
 const generatePhrase = () =>
   import("@/app/actions/generate-phrase").then((m) => m.generatePhrase());
-import { getRandomWrongPhrase } from "@/lib/phrases";
-import {
-  getRandomSpellingPositive,
-  getSpellingWrongAudio,
-  getLetterAudio,
-  getSpellWordAudio,
-  getWordAudio,
-} from "@/lib/spelling-audio";
+// Lazy-load gameplay audio helpers — cached after first import
+type PhrasesModule = typeof import("@/lib/phrases");
+type SpellingAudioModule = typeof import("@/lib/spelling-audio");
+let _phrases: PhrasesModule | null = null;
+let _spelling: SpellingAudioModule | null = null;
+const preloadGameplay = () => {
+  import("@/lib/phrases").then(m => { _phrases = m; });
+  import("@/lib/spelling-audio").then(m => { _spelling = m; });
+};
 import {
   loadMutedPreference,
   saveMutedPreference,
@@ -98,6 +99,9 @@ export function KeyboardEngine() {
   const { speak, speakSequence, stopCurrent } = useSpeech({ muted });
   const lastSpellingWord = useRef<string>("");
 
+  // Preload gameplay modules in background
+  useEffect(() => { preloadGameplay(); }, []);
+
   useMacShield();
 
   // Save progress on level-complete and next-level
@@ -118,7 +122,7 @@ export function KeyboardEngine() {
       lastSpellingWord.current = state.currentWord;
       // Small delay so the UI renders first
       const timer = setTimeout(() => {
-        speak("", getSpellWordAudio(state.currentWord));
+        if (_spelling) speak("", _spelling.getSpellWordAudio(state.currentWord));
       }, 300);
       return () => clearTimeout(timer);
     }
@@ -135,9 +139,9 @@ export function KeyboardEngine() {
     if (isSpelling) {
       if (isLastLetter) {
         // Word complete: say the word → positive affirmation
-        const positive = getRandomSpellingPositive();
-        const wordAudio = getWordAudio(state.currentWord);
-        speakSequence([wordAudio, positive.audioFile]);
+        const positive = _spelling?.getRandomSpellingPositive();
+        const wordAudio = _spelling?.getWordAudio(state.currentWord);
+        if (wordAudio && positive) speakSequence([wordAudio, positive.audioFile]);
         dispatch({ type: "SET_CELEBRATION_MESSAGE", message: `${state.currentWord.toUpperCase()}!` });
         celebrationTimer.current = setTimeout(() => {
           setPressedKey(null);
@@ -145,7 +149,7 @@ export function KeyboardEngine() {
         }, 3500);
       } else {
         // Individual letter: say the letter name
-        speak("", getLetterAudio(state.targetLetter));
+        if (_spelling) speak("", _spelling.getLetterAudio(state.targetLetter));
         celebrationTimer.current = setTimeout(() => {
           setPressedKey(null);
           dispatch({ type: "FINISH_CELEBRATION" });
@@ -169,11 +173,13 @@ export function KeyboardEngine() {
 
     if (state.mode === "spelling") {
       dispatch({ type: "WRONG_KEY", message: "Try Again!" });
-      speak("Try Again!", getSpellingWrongAudio());
+      if (_spelling) speak("Try Again!", _spelling.getSpellingWrongAudio());
     } else {
-      const result = getRandomWrongPhrase();
-      dispatch({ type: "WRONG_KEY", message: result.text });
-      speak(result.text, result.audioFile);
+      const result = _phrases?.getRandomWrongPhrase();
+      if (result) {
+        dispatch({ type: "WRONG_KEY", message: result.text });
+        speak(result.text, result.audioFile);
+      }
     }
     wrongTimer.current = setTimeout(() => dispatch({ type: "CLEAR_WRONG" }), 2500);
   }, [speak, state.mode]);
