@@ -131,3 +131,37 @@ body {
 .animate-msg-in { animation: msg-in 0.3s ease-out forwards; }
 .animate-msg-wrong-in { animation: msg-wrong-in 0.2s ease-out forwards; }
 
+/* Welcome screen animations */
+@keyframes mascot-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-12px) rotate(5deg); }
+  75% { transform: translateY(0) rotate(-5deg); }
+}
+@keyframes title-in {
+  from { transform: translateY(-50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes subtitle-in {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes card-in {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes buttons-in {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes btn-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+.animate-mascot { animation: mascot-float 4s ease-in-out infinite; }
+.animate-title-in { animation: title-in 0.9s ease-out forwards; }
+.animate-subtitle-in { animation: subtitle-in 0.6s ease-out 0.5s forwards; opacity: 0; }
+.animate-card-in { animation: card-in 0.5s ease-out 0.8s forwards; opacity: 0; }
+.animate-buttons-in { animation: buttons-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) 1.3s forwards; opacity: 0; }
+.animate-btn-pulse { animation: btn-pulse 2.5s ease-in-out infinite; }
+

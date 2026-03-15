@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, lazy, Suspense } from "react";
-import { AnimatePresence, m } from "framer-motion";
+
 
 const AboutModal = lazy(() =>
   import("./AboutModal").then((m) => ({ default: m.AboutModal }))
@@ -35,21 +35,12 @@ export function WelcomeScreen({ onStart, onStartSpelling, onResume, savedLevel, 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-6 px-4 relative z-10">
       {/* Floating mascot */}
-      <m.div
-        className="text-7xl"
-        animate={{ y: [0, -12, 0], rotate: [0, 5, -5, 0] }}
-        transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-      >
+      <div className="text-7xl animate-mascot">
         <span role="img" aria-label="rocket">🚀</span>
-      </m.div>
+      </div>
 
       {/* Title */}
-      <m.div
-        className="text-center"
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.9, ease: "easeOut" }}
-      >
+      <div className="text-center animate-title-in">
         <h1
           className="text-7xl md:text-9xl font-bold tracking-tight leading-none mb-2"
           style={{
@@ -61,12 +52,7 @@ export function WelcomeScreen({ onStart, onStartSpelling, onResume, savedLevel, 
         >
           MacQuest
         </h1>
-        <m.div
-          className="flex items-center justify-center gap-3"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.6 }}
-        >
+        <div className="flex items-center justify-center gap-3 animate-subtitle-in">
           <div className="h-px w-12 bg-gradient-to-r from-transparent to-purple-400/50" />
           <p
             className="text-xl md:text-2xl font-medium tracking-widest uppercase"
@@ -75,16 +61,11 @@ export function WelcomeScreen({ onStart, onStartSpelling, onResume, savedLevel, 
             The Typing Adventure
           </p>
           <div className="h-px w-12 bg-gradient-to-l from-transparent to-purple-400/50" />
-        </m.div>
-      </m.div>
+        </div>
+      </div>
 
       {/* Instruction card */}
-      <m.div
-        className="glass-panel px-8 py-6 max-w-md text-center"
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.8, duration: 0.5 }}
-      >
+      <div className="glass-panel px-8 py-6 max-w-md text-center animate-card-in">
         {hasSave ? (
           <>
             <p className="text-lg text-white/70 leading-relaxed mb-1">
@@ -136,23 +117,16 @@ export function WelcomeScreen({ onStart, onStartSpelling, onResume, savedLevel, 
             <p className="text-sm text-white/40 mt-3">They have little bumps you can feel!</p>
           </>
         )}
-      </m.div>
+      </div>
 
       {/* Buttons */}
-      <m.div
-        className="flex flex-col items-center gap-3"
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 1.3, type: "spring", stiffness: 180, damping: 12 }}
-      >
+      <div className="flex flex-col items-center gap-3 animate-buttons-in">
         {hasSave && (
           <>
             {/* Continue Adventure (primary) */}
-            <m.button
+            <button
               onClick={onResume}
-              className="relative group cursor-pointer"
-              whileHover={{ scale: 1.06 }}
-              whileTap={{ scale: 0.94 }}
+              className="relative group cursor-pointer transition-transform hover:scale-[1.06] active:scale-[0.94]"
             >
               <div
                 className="absolute -inset-2 rounded-full opacity-60 group-hover:opacity-80 transition-opacity animate-pulse-ring"
@@ -168,25 +142,19 @@ export function WelcomeScreen({ onStart, onStartSpelling, onResume, savedLevel, 
                   boxShadow: "0 4px 24px rgba(139, 92, 246, 0.4), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.15)",
                 }}
               >
-                <m.span
-                  className="inline-block"
-                  animate={{ scale: [1, 1.03, 1] }}
-                  transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
-                >
+                <span className="inline-block animate-btn-pulse">
                   Continue Adventure
-                </m.span>
+                </span>
               </div>
-            </m.button>
+            </button>
           </>
         )}
 
         {/* Mode selection buttons — always visible */}
         <div className="flex items-center gap-4">
-          <m.button
+          <button
             onClick={onStart}
-            className="relative group cursor-pointer"
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.94 }}
+            className="relative group cursor-pointer transition-transform hover:scale-[1.06] active:scale-[0.94]"
           >
             <div
               className="absolute -inset-2 rounded-full opacity-50 group-hover:opacity-70 transition-opacity"
@@ -204,13 +172,11 @@ export function WelcomeScreen({ onStart, onStartSpelling, onResume, savedLevel, 
             >
               <span role="img" aria-label="rocket">🚀</span> Practice Typing
             </div>
-          </m.button>
+          </button>
 
-          <m.button
+          <button
             onClick={onStartSpelling}
-            className="relative group cursor-pointer"
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.94 }}
+            className="relative group cursor-pointer transition-transform hover:scale-[1.06] active:scale-[0.94]"
           >
             <div
               className="absolute -inset-2 rounded-full opacity-50 group-hover:opacity-70 transition-opacity"
@@ -228,29 +194,25 @@ export function WelcomeScreen({ onStart, onStartSpelling, onResume, savedLevel, 
             >
               <span role="img" aria-label="pencil">✏️</span> Spelling Words
             </div>
-          </m.button>
+          </button>
         </div>
 
         {hasSave && (
-          <m.button
+          <button
             onClick={onStart}
-            className="cursor-pointer px-8 py-2.5 rounded-full text-base font-medium text-white/40 hover:text-white/60 transition-colors"
+            className="cursor-pointer px-8 py-2.5 rounded-full text-base font-medium text-white/40 hover:text-white/60 transition-all hover:scale-[1.04] active:scale-[0.96]"
             style={{
               border: "1px solid rgba(255,255,255,0.1)",
             }}
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
           >
             Start Over
-          </m.button>
+          </button>
         )}
 
-        <m.button
+        <button
           type="button"
           onClick={() => setShowAboutModal(true)}
-          className="group relative cursor-pointer"
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.97 }}
+          className="group relative cursor-pointer transition-transform hover:scale-[1.04] active:scale-[0.97]"
         >
           <div
             className="absolute -inset-2 rounded-full opacity-35 transition-opacity group-hover:opacity-55"
@@ -271,16 +233,14 @@ export function WelcomeScreen({ onStart, onStartSpelling, onResume, savedLevel, 
             <span role="img" aria-hidden="true">🪐</span>{" "}
             What is MacQuest?
           </div>
-        </m.button>
-      </m.div>
+        </button>
+      </div>
 
-      <AnimatePresence>
-        {showAboutModal && (
-          <Suspense fallback={null}>
-            <AboutModal onClose={() => setShowAboutModal(false)} />
-          </Suspense>
-        )}
-      </AnimatePresence>
+      {showAboutModal && (
+        <Suspense fallback={null}>
+          <AboutModal onClose={() => setShowAboutModal(false)} />
+        </Suspense>
+      )}
 
       {/* Floating decorative elements — CSS-only animations */}
       <div
