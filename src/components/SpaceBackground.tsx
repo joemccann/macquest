@@ -124,55 +124,60 @@ export function SpaceBackground() {
         />
       ))}
 
-      {/* Floating cosmic orb */}
-      <div
-        className="absolute animate-float opacity-20"
-        style={{
-          width: 180,
-          height: 180,
-          borderRadius: "50%",
-          background: "radial-gradient(circle at 35% 35%, #a78bfa 0%, #7c3aed 40%, transparent 70%)",
-          right: "5%",
-          top: "8%",
-          filter: "blur(8px)",
-        }}
-      />
+      {/* Decorative elements — client-side only */}
+      {mounted && (
+        <>
+          {/* Floating cosmic orb */}
+          <div
+            className="absolute animate-float opacity-20"
+            style={{
+              width: 180,
+              height: 180,
+              borderRadius: "50%",
+              background: "radial-gradient(circle at 35% 35%, #a78bfa 0%, #7c3aed 40%, transparent 70%)",
+              right: "5%",
+              top: "8%",
+              filter: "blur(8px)",
+            }}
+          />
 
-      {/* Ring planet */}
-      <div
-        className="absolute animate-float"
-        style={{
-          width: 50,
-          height: 50,
-          right: "12%",
-          top: "55%",
-          animationDelay: "2s",
-        }}
-      >
-        <div
-          className="absolute rounded-full"
-          style={{
-            width: 30,
-            height: 30,
-            left: 10,
-            top: 10,
-            background: "radial-gradient(circle at 40% 35%, #fbbf24, #d97706)",
-            opacity: 0.25,
-          }}
-        />
-        <div
-          className="absolute"
-          style={{
-            width: 50,
-            height: 12,
-            left: 0,
-            top: 19,
-            borderRadius: "50%",
-            border: "1.5px solid rgba(251, 191, 36, 0.15)",
-            transform: "rotateX(60deg)",
-          }}
-        />
-      </div>
+          {/* Ring planet */}
+          <div
+            className="absolute animate-float"
+            style={{
+              width: 50,
+              height: 50,
+              right: "12%",
+              top: "55%",
+              animationDelay: "2s",
+            }}
+          >
+            <div
+              className="absolute rounded-full"
+              style={{
+                width: 30,
+                height: 30,
+                left: 10,
+                top: 10,
+                background: "radial-gradient(circle at 40% 35%, #fbbf24, #d97706)",
+                opacity: 0.25,
+              }}
+            />
+            <div
+              className="absolute"
+              style={{
+                width: 50,
+                height: 12,
+                left: 0,
+                top: 19,
+                borderRadius: "50%",
+                border: "1.5px solid rgba(251, 191, 36, 0.15)",
+                transform: "rotateX(60deg)",
+              }}
+            />
+          </div>
+        </>
+      )}
 
     </div>
   );
