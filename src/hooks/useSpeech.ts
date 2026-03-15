@@ -2,39 +2,82 @@
 
 import { useCallback, useEffect, useRef } from "react";
 
-export function useSpeech({ muted = false }: { muted?: boolean } = {}) {
-  const audio = useRef<HTMLAudioElement | null>(null);
-  const abort = useRef<AbortController | null>(null);
+/**
+ * Plays pre-recorded ElevenLabs MP3 files.
+ *
+ * `speak()` — play a single clip
+ * `speakSequence()` — play multiple clips back-to-back
+ */
+interface UseSpeechOptions {
+  muted?: boolean;
+}
+
+export function useSpeech({ muted = false }: UseSpeechOptions = {}) {
+  const currentAudio = useRef<HTMLAudioElement | null>(null);
+  const sequenceAbort = useRef<AbortController | null>(null);
 
   const stopCurrent = useCallback(() => {
-    abort.current?.abort(); abort.current = null;
-    audio.current?.pause(); audio.current = null;
+    if (sequenceAbort.current) {
+      sequenceAbort.current.abort();
+      sequenceAbort.current = null;
+    }
+    if (currentAudio.current) {
+      currentAudio.current.pause();
+      currentAudio.current = null;
+    }
   }, []);
 
-  const playFile = useCallback((f: string): Promise<void> =>
-    new Promise((ok, fail) => {
-      const a = new Audio(f);
-      a.volume = 1;
-      audio.current = a;
-      a.onended = () => ok();
-      a.onerror = () => fail(new Error("Failed to play " + f));
-      a.play().catch(fail);
-    }), []);
+  const playFile = useCallback((audioFile: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const audio = new Audio(audioFile);
+      audio.volume = 1;
+      currentAudio.current = audio;
+      audio.onended = () => resolve();
+      audio.onerror = () => reject(new Error(`Failed to play ${audioFile}`));
+      audio.play().catch(reject);
+    });
+  }, []);
 
-  const speak = useCallback((_: string, file?: string) => {
-    stopCurrent();
-    if (!muted && file) playFile(file).catch(() => {});
-  }, [muted, stopCurrent, playFile]);
+  const speak = useCallback((_text: string, audioFile?: string) => {
+    if (typeof window === "undefined") return;
 
-  const speakSequence = useCallback((files: string[]) => {
     stopCurrent();
     if (muted) return;
-    const c = new AbortController();
-    abort.current = c;
-    (async () => { for (const f of files) { if (c.signal.aborted) return; try { await playFile(f); } catch {} } })();
+
+    if (audioFile) {
+      playFile(audioFile).catch(() => {
+        // Silently ignore playback failures
+      });
+    }
   }, [muted, stopCurrent, playFile]);
 
-  useEffect(() => { if (muted) stopCurrent(); }, [muted, stopCurrent]);
+  /** Play multiple audio files in sequence (stops if a new speak/sequence call occurs) */
+  const speakSequence = useCallback((audioFiles: string[]) => {
+    if (typeof window === "undefined") return;
+
+    stopCurrent();
+    if (muted) return;
+
+    const controller = new AbortController();
+    sequenceAbort.current = controller;
+
+    (async () => {
+      for (const file of audioFiles) {
+        if (controller.signal.aborted) return;
+        try {
+          await playFile(file);
+        } catch {
+          // Skip failed clips, continue sequence
+        }
+      }
+    })();
+  }, [muted, stopCurrent, playFile]);
+
+  useEffect(() => {
+    if (muted) {
+      stopCurrent();
+    }
+  }, [muted, stopCurrent]);
 
   return { speak, speakSequence, stopCurrent };
 }

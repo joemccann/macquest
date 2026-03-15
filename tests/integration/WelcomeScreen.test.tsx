@@ -99,13 +99,14 @@ describe("WelcomeScreen", () => {
     ).toBeInTheDocument();
   });
 
-  it("opens and closes the MacQuest info modal", () => {
+  it("opens and closes the MacQuest info modal", async () => {
     render(<WelcomeScreen {...defaultProps} />);
 
     fireEvent.click(screen.getByRole("button", { name: /What is MacQuest\?/ }));
 
+    // AboutModal is lazy-loaded — wait for it
     expect(
-      screen.getByRole("dialog", { name: "What is MacQuest?" })
+      await screen.findByRole("dialog", { name: "What is MacQuest?" })
     ).toBeInTheDocument();
     expect(
       screen.getByText(/started in PhD research/i)

@@ -1,16 +1,29 @@
 import type { GameMode } from "./game-state";
 
-const KEY = "macquest-save";
+const STORAGE_KEY = "macquest-save";
+const SAVE_VERSION = 2;
 export const SAVE_STATE_EVENT = "macquest-save-changed";
-let _raw: string | null | undefined;
-let _state: SaveState | null = null;
+let cachedSaveRaw: string | null | undefined;
+let cachedSaveState: SaveState | null = null;
 
-function ls(): Storage | null {
-  try { return typeof window !== "undefined" ? window.localStorage : null; } catch { return null; }
+function getStorage(): Storage | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
 }
 
-function emit() {
-  if (typeof window !== "undefined") window.dispatchEvent(new Event(SAVE_STATE_EVENT));
+function emitSaveStateChange(): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.dispatchEvent(new Event(SAVE_STATE_EVENT));
 }
 
 export interface SaveState {
@@ -35,38 +48,121 @@ export function saveProgress(state: {
   spellingWordIndex: number;
 }): void {
   try {
-    const s = ls();
-    if (!s) return;
-    s.setItem(KEY, JSON.stringify({ version: 2, ...state, lastSavedAt: Date.now() }));
-    emit();
-  } catch { /* silent */ }
+    const storage = getStorage();
+    if (!storage) return;
+
+    const save: SaveState = {
+      version: SAVE_VERSION,
+      currentLevel: state.currentLevel,
+      currentLetterIndex: state.currentLetterIndex,
+      score: state.score,
+      perfectLevels: state.perfectLevels,
+      wrongCountThisLevel: state.wrongCountThisLevel,
+      lastSavedAt: Date.now(),
+      mode: state.mode,
+      spellingWordIndex: state.spellingWordIndex,
+    };
+    storage.setItem(STORAGE_KEY, JSON.stringify(save));
+    emitSaveStateChange();
+  } catch {
+    // Silent failure — game works without persistence
+  }
 }
 
 export function loadProgress(): SaveState | null {
   try {
-    const s = ls();
-    if (!s) return null;
-    const raw = s.getItem(KEY);
-    if (raw === _raw) return _state;
-    _raw = raw;
-    if (!raw) { _state = null; return null; }
-    const d = JSON.parse(raw);
-    if (typeof d !== "object" || !d) { _state = null; return null; }
-    // V2 save
-    if (d.version === 2 && typeof d.currentLevel === "number" && typeof d.score === "number" && Array.isArray(d.perfectLevels)) {
-      _state = d;
-      return d;
+    const storage = getStorage();
+    if (!storage) return null;
+
+    const raw = storage.getItem(STORAGE_KEY);
+    if (raw === cachedSaveRaw) {
+      return cachedSaveState;
     }
-    // V1 migration
-    if (d.version === 1 && typeof d.currentLevel === "number") {
-      _state = { ...d, version: 2, mode: "keys" as const, spellingWordIndex: 0 };
-      return _state;
+
+    cachedSaveRaw = raw;
+
+    if (!raw) {
+      cachedSaveState = null;
+      return null;
     }
-    _state = null;
+
+    const data: unknown = JSON.parse(raw);
+    if (isValidSaveState(data)) {
+      cachedSaveState = data;
+      return data;
+    }
+    // Migrate v1 saves
+    if (isValidV1SaveState(data)) {
+      cachedSaveState = migrateV1(data);
+      return cachedSaveState;
+    }
+
+    cachedSaveState = null;
     return null;
-  } catch { _raw = null; _state = null; return null; }
+  } catch {
+    cachedSaveRaw = null;
+    cachedSaveState = null;
+    return null;
+  }
 }
 
 export function clearProgress(): void {
-  try { const s = ls(); if (s) { s.removeItem(KEY); emit(); } } catch { /* silent */ }
+  try {
+    const storage = getStorage();
+    if (!storage) return;
+
+    storage.removeItem(STORAGE_KEY);
+    emitSaveStateChange();
+  } catch {
+    // Silent failure
+  }
+}
+
+function isValidSaveState(data: unknown): data is SaveState {
+  if (typeof data !== "object" || data === null) return false;
+  const obj = data as Record<string, unknown>;
+  return (
+    obj.version === SAVE_VERSION &&
+    typeof obj.currentLevel === "number" &&
+    typeof obj.currentLetterIndex === "number" &&
+    typeof obj.score === "number" &&
+    Array.isArray(obj.perfectLevels) &&
+    typeof obj.wrongCountThisLevel === "number" &&
+    typeof obj.lastSavedAt === "number" &&
+    (obj.mode === "keys" || obj.mode === "spelling") &&
+    typeof obj.spellingWordIndex === "number"
+  );
+}
+
+interface V1SaveState {
+  version: number;
+  currentLevel: number;
+  currentLetterIndex: number;
+  score: number;
+  perfectLevels: number[];
+  wrongCountThisLevel: number;
+  lastSavedAt: number;
+}
+
+function isValidV1SaveState(data: unknown): data is V1SaveState {
+  if (typeof data !== "object" || data === null) return false;
+  const obj = data as Record<string, unknown>;
+  return (
+    obj.version === 1 &&
+    typeof obj.currentLevel === "number" &&
+    typeof obj.currentLetterIndex === "number" &&
+    typeof obj.score === "number" &&
+    Array.isArray(obj.perfectLevels) &&
+    typeof obj.wrongCountThisLevel === "number" &&
+    typeof obj.lastSavedAt === "number"
+  );
+}
+
+function migrateV1(v1: V1SaveState): SaveState {
+  return {
+    ...v1,
+    version: SAVE_VERSION,
+    mode: "keys",
+    spellingWordIndex: 0,
+  };
 }

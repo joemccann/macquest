@@ -16,10 +16,3 @@ Object.defineProperty(HTMLMediaElement.prototype, "pause", {
   value: vi.fn(),
   writable: true,
 });
-
-// Mock server actions
-vi.mock("@/app/actions/generate-phrase", () => ({
-  generatePhrase: vi.fn(() =>
-    Promise.resolve({ text: "Great job!", audioFile: "/audio/positive/00.mp3" })
-  ),
-}));

@@ -35,21 +35,15 @@ import { SpaceBackground } from "./SpaceBackground";
 const AudioToggle = lazy(() =>
   import("./AudioToggle").then((m) => ({ default: m.AudioToggle }))
 );
-// Lazy-load server action — only called during gameplay
-const generatePhrase = () =>
-  import("@/app/actions/generate-phrase").then((m) => m.generatePhrase());
-// Lazy-load gameplay modules — cached after first import
-type PhrasesModule = typeof import("@/lib/phrases");
-type SpellingAudioModule = typeof import("@/lib/spelling-audio");
-type WordsModule = typeof import("@/lib/words");
-let _phrases: PhrasesModule | null = null;
-let _spelling: SpellingAudioModule | null = null;
-let _words: WordsModule | null = null;
-const preloadGameplay = () => {
-  import("@/lib/phrases").then(m => { _phrases = m; });
-  import("@/lib/spelling-audio").then(m => { _spelling = m; });
-  import("@/lib/words").then(m => { _words = m; });
-};
+import { generatePhrase } from "@/app/actions/generate-phrase";
+import { getRandomWrongPhrase } from "@/lib/phrases";
+import {
+  getRandomSpellingPositive,
+  getSpellingWrongAudio,
+  getLetterAudio,
+  getSpellWordAudio,
+  getWordAudio,
+} from "@/lib/spelling-audio";
 import {
   loadMutedPreference,
   saveMutedPreference,
@@ -103,7 +97,7 @@ export function KeyboardEngine() {
   const lastSpellingWord = useRef<string>("");
 
   // Preload gameplay modules in background
-  useEffect(() => { preloadGameplay(); }, []);
+  
 
   useMacShield();
 
@@ -125,7 +119,7 @@ export function KeyboardEngine() {
       lastSpellingWord.current = state.currentWord;
       // Small delay so the UI renders first
       const timer = setTimeout(() => {
-        if (_spelling) speak("", _spelling.getSpellWordAudio(state.currentWord));
+        speak("", getSpellWordAudio(state.currentWord));
       }, 300);
       return () => clearTimeout(timer);
     }
@@ -142,9 +136,9 @@ export function KeyboardEngine() {
     if (isSpelling) {
       if (isLastLetter) {
         // Word complete: say the word → positive affirmation
-        const positive = _spelling?.getRandomSpellingPositive();
-        const wordAudio = _spelling?.getWordAudio(state.currentWord);
-        if (wordAudio && positive) speakSequence([wordAudio, positive.audioFile]);
+        const positive = getRandomSpellingPositive();
+        const wordAudio = getWordAudio(state.currentWord);
+        speakSequence([wordAudio, positive.audioFile]);
         dispatch({ type: "SET_CELEBRATION_MESSAGE", message: `${state.currentWord.toUpperCase()}!` });
         celebrationTimer.current = setTimeout(() => {
           setPressedKey(null);
@@ -152,7 +146,7 @@ export function KeyboardEngine() {
         }, 3500);
       } else {
         // Individual letter: say the letter name
-        if (_spelling) speak("", _spelling.getLetterAudio(state.targetLetter));
+        speak("", getLetterAudio(state.targetLetter));
         celebrationTimer.current = setTimeout(() => {
           setPressedKey(null);
           dispatch({ type: "FINISH_CELEBRATION" });
@@ -176,13 +170,11 @@ export function KeyboardEngine() {
 
     if (state.mode === "spelling") {
       dispatch({ type: "WRONG_KEY", message: "Try Again!" });
-      if (_spelling) speak("Try Again!", _spelling.getSpellingWrongAudio());
+      speak("Try Again!", getSpellingWrongAudio());
     } else {
-      const result = _phrases?.getRandomWrongPhrase();
-      if (result) {
-        dispatch({ type: "WRONG_KEY", message: result.text });
-        speak(result.text, result.audioFile);
-      }
+      const result = getRandomWrongPhrase();
+      dispatch({ type: "WRONG_KEY", message: result.text });
+      speak(result.text, result.audioFile);
     }
     wrongTimer.current = setTimeout(() => dispatch({ type: "CLEAR_WRONG" }), 2500);
   }, [speak, state.mode]);
@@ -201,10 +193,7 @@ export function KeyboardEngine() {
 
   const handleResume = useCallback(() => {
     if (savedGame) {
-      const word = savedGame.mode === "spelling" && _words
-        ? _words.getSpellingWord(savedGame.spellingWordIndex)
-        : undefined;
-      dispatch({ type: "RESUME_GAME", save: savedGame, word });
+      dispatch({ type: "RESUME_GAME", save: savedGame });
     }
   }, [savedGame]);
 
@@ -213,16 +202,12 @@ export function KeyboardEngine() {
   }, []);
 
   const handleStartSpelling = useCallback(() => {
-    const word = _words ? _words.getSpellingWord(0) : "cat";
-    dispatch({ type: "START_SPELLING", word });
+    dispatch({ type: "START_SPELLING" });
   }, []);
 
   const handleNextWord = useCallback(() => {
-    const nextIdx = state.spellingWordIndex + 1;
-    const done = !_words || nextIdx >= _words.SPELLING_WORDS.length;
-    const word = done ? "" : _words!.getSpellingWord(nextIdx);
-    dispatch({ type: "NEXT_WORD", word, done });
-  }, [state.spellingWordIndex]);
+    dispatch({ type: "NEXT_WORD" });
+  }, []);
 
   const handleReturnHome = useCallback(() => {
     stopCurrent();

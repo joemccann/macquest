@@ -8,17 +8,48 @@ describe("SpaceBackground", () => {
     expect(container.firstChild).toBeInTheDocument();
   });
 
-  it("renders as a single div with space-bg class", () => {
+  it("renders 120 regular star elements plus 5 bright stars", () => {
     const { container } = render(<SpaceBackground />);
-    const el = container.firstChild as HTMLElement;
-    expect(el.tagName).toBe("DIV");
-    expect(el.className).toContain("space-bg");
+    const twinkleElements = container.querySelectorAll(".animate-twinkle");
+    expect(twinkleElements).toHaveLength(125); // 120 regular + 5 bright
   });
 
-  it("is a lightweight pure-CSS component (no child elements)", () => {
+  it("renders the aurora/nebula elements", () => {
     const { container } = render(<SpaceBackground />);
-    const el = container.firstChild as HTMLElement;
-    // Stars and decorations are rendered via CSS pseudo-elements, not DOM nodes
-    expect(el.children.length).toBe(0);
+    const auroraElements = container.querySelectorAll(".animate-aurora");
+    expect(auroraElements).toHaveLength(2);
+  });
+
+  it("renders floating cosmic orbs", () => {
+    const { container } = render(<SpaceBackground />);
+    const floatingElements = container.querySelectorAll(".animate-float");
+    expect(floatingElements.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("renders the ring planet", () => {
+    const { container } = render(<SpaceBackground />);
+    const ringPlanet = container.querySelector(
+      '[style*="rotateX(60deg)"]'
+    );
+    expect(ringPlanet).toBeInTheDocument();
+  });
+
+  it("is non-interactive with pointer-events-none", () => {
+    const { container } = render(<SpaceBackground />);
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.className).toContain("pointer-events-none");
+  });
+
+  it("is fixed position and covers the full viewport", () => {
+    const { container } = render(<SpaceBackground />);
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.className).toContain("fixed");
+    expect(wrapper.className).toContain("inset-0");
+  });
+
+  it("has grid overlay for depth", () => {
+    const { container } = render(<SpaceBackground />);
+    const gridOverlay = container.querySelector('.opacity-\\[0\\.02\\]');
+    expect(gridOverlay).toBeInTheDocument();
   });
 });
