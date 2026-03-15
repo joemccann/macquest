@@ -116,7 +116,7 @@ export function SpaceBackground() {
         />
       ))}
 
-      {/* Floating cosmic orbs */}
+      {/* Floating cosmic orb */}
       <div
         className="absolute animate-float opacity-20"
         style={{
@@ -127,32 +127,6 @@ export function SpaceBackground() {
           right: "5%",
           top: "8%",
           filter: "blur(8px)",
-        }}
-      />
-      <div
-        className="absolute animate-float opacity-15"
-        style={{
-          width: 100,
-          height: 100,
-          borderRadius: "50%",
-          background: "radial-gradient(circle at 35% 35%, #60a5fa 0%, #2563eb 40%, transparent 70%)",
-          left: "5%",
-          bottom: "15%",
-          filter: "blur(6px)",
-          animationDelay: "3s",
-        }}
-      />
-      <div
-        className="absolute animate-float opacity-10"
-        style={{
-          width: 60,
-          height: 60,
-          borderRadius: "50%",
-          background: "radial-gradient(circle at 35% 35%, #fb923c 0%, #ea580c 40%, transparent 70%)",
-          right: "20%",
-          bottom: "25%",
-          filter: "blur(4px)",
-          animationDelay: "5s",
         }}
       />
 
