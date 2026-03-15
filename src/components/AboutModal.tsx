@@ -1,6 +1,6 @@
 "use client";
 
-import { m } from "framer-motion";
+import { LazyMotion, domAnimation, m } from "framer-motion";
 
 interface AboutModalProps {
   onClose: () => void;
@@ -8,6 +8,7 @@ interface AboutModalProps {
 
 export function AboutModal({ onClose }: AboutModalProps) {
   return (
+    <LazyMotion features={domAnimation}>
     <m.div
       className="fixed inset-0 z-30 flex items-center justify-center bg-[#050714]/78 px-4 py-6 backdrop-blur-md"
       initial={{ opacity: 0 }}
@@ -162,5 +163,6 @@ export function AboutModal({ onClose }: AboutModalProps) {
         </div>
       </m.section>
     </m.div>
+    </LazyMotion>
   );
 }

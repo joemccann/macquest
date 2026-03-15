@@ -1,6 +1,6 @@
 "use client";
 
-import { m, AnimatePresence } from "framer-motion";
+import { LazyMotion, domAnimation, m, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
 
 interface ParticleExplosionProps {
@@ -54,6 +54,7 @@ export function ParticleExplosion({ active, id }: ParticleExplosionProps) {
   }, [id]);
 
   return (
+    <LazyMotion features={domAnimation}>
     <AnimatePresence>
       {active && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
@@ -108,5 +109,6 @@ export function ParticleExplosion({ active, id }: ParticleExplosionProps) {
         </div>
       )}
     </AnimatePresence>
+    </LazyMotion>
   );
 }

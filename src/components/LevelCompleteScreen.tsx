@@ -1,6 +1,6 @@
 "use client";
 
-import { m } from "framer-motion";
+import { LazyMotion, domAnimation, m } from "framer-motion";
 import { AudioToggle } from "./AudioToggle";
 
 interface LevelCompleteScreenProps {
@@ -29,6 +29,7 @@ export function LevelCompleteScreen({
   onNext,
 }: LevelCompleteScreenProps) {
   return (
+    <LazyMotion features={domAnimation}>
     <div className="flex flex-col items-center justify-center min-h-screen gap-8 px-4 relative z-10">
       {/* Home button */}
       <m.button
@@ -145,5 +146,6 @@ export function LevelCompleteScreen({
         </div>
       </m.button>
     </div>
+    </LazyMotion>
   );
 }

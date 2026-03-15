@@ -10,7 +10,7 @@ import {
   lazy,
   Suspense,
 } from "react";
-import { LazyMotion, domAnimation } from "framer-motion";
+
 import { gameReducer, getInitialState, LEVEL_NAMES } from "@/lib/game-state";
 import {
   saveProgress,
@@ -219,7 +219,7 @@ export function KeyboardEngine() {
 
   if (state.phase === "welcome") {
     return (
-      <LazyMotion features={domAnimation} strict>
+      <>
         <SpaceBackground />
         <div className="relative min-h-screen">
           <AudioToggle
@@ -235,13 +235,13 @@ export function KeyboardEngine() {
             savedScore={savedGame?.score}
           />
         </div>
-      </LazyMotion>
+      </>
     );
   }
 
   if (state.phase === "victory") {
     return (
-      <LazyMotion features={domAnimation} strict>
+      <>
         <SpaceBackground />
         <Suspense fallback={null}>
           <VictoryScreen
@@ -256,13 +256,13 @@ export function KeyboardEngine() {
             onStart={handleStart}
           />
         </Suspense>
-      </LazyMotion>
+      </>
     );
   }
 
   if (state.phase === "level-complete") {
     return (
-      <LazyMotion features={domAnimation} strict>
+      <>
         <SpaceBackground />
         <Suspense fallback={null}>
           <LevelCompleteScreen
@@ -278,7 +278,7 @@ export function KeyboardEngine() {
             onNext={state.mode === "spelling" ? handleNextWord : handleNextLevel}
           />
         </Suspense>
-      </LazyMotion>
+      </>
     );
   }
 
@@ -315,7 +315,7 @@ export function KeyboardEngine() {
   ) : null;
 
   return (
-    <LazyMotion features={domAnimation} strict>
+    <>
       <SpaceBackground />
       <div className="relative flex flex-col items-center min-h-screen gap-4 px-4 pt-4 pb-4 z-10">
         {/* Home button — top-left corner */}
@@ -511,6 +511,6 @@ export function KeyboardEngine() {
           pressedKey={state.phase === "celebrating" ? pressedKey : null}
         />
       </div>
-    </LazyMotion>
+    </>
   );
 }
