@@ -10,7 +10,7 @@ import {
   lazy,
   Suspense,
 } from "react";
-import { LazyMotion, domAnimation, m } from "framer-motion";
+import { LazyMotion, domAnimation } from "framer-motion";
 import { gameReducer, getInitialState, LEVEL_NAMES } from "@/lib/game-state";
 import {
   saveProgress,
@@ -407,20 +407,9 @@ export function KeyboardEngine() {
 
         {/* Target letter display */}
         <div className="relative flex items-center justify-center" style={{ minHeight: 200 }}>
-          <m.div
+          <div
             key={state.targetLetter + state.currentLetterIndex}
-            className="letter-halo"
-            initial={{ scale: 0.3, opacity: 0 }}
-            animate={
-              state.wrongKey
-                ? { scale: 1, opacity: 1, x: [0, -12, 12, -12, 12, 0] }
-                : { scale: 1, opacity: 1, x: 0 }
-            }
-            transition={
-              state.wrongKey
-                ? { duration: 0.4, ease: "easeInOut" }
-                : { type: "spring", stiffness: 250, damping: 15 }
-            }
+            className={`letter-halo ${state.wrongKey ? "animate-letter-shake" : "animate-letter-in"}`}
           >
             <div
               className="text-[140px] md:text-[180px] font-bold leading-none select-none text-center"
@@ -433,7 +422,7 @@ export function KeyboardEngine() {
             >
               {state.targetLetter}
             </div>
-          </m.div>
+          </div>
 
           <Suspense fallback={null}>
             <ParticleExplosion
