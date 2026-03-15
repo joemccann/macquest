@@ -56,4 +56,29 @@ Minimize the First Load JS bundle size for the main page (/) of MacQuest — a N
 - `class-variance-authority` is a Shadcn dependency
 
 ## What's Been Tried
-(Starting fresh — no experiments yet)
+
+### Wins
+1. **LazyMotion + m components** — replaced `motion` import with `LazyMotion features={domAnimation}` + `m` components. Only loads animation features, not layout/drag/etc. **Biggest single win: 156→144 KB (-12 KB)**
+2. **Lazy-load AboutModal** — React.lazy for the rarely-shown "What is MacQuest?" modal. -1 KB page chunk
+3. **Lazy-load VictoryScreen & LevelCompleteScreen** — React.lazy for post-game screens. -0.4 KB
+4. **Lazy-load ParticleExplosion** — React.lazy, particles only load on first celebration. -0.5 KB
+5. **CSS-only floating emojis** in WelcomeScreen — replaced 4 motion.div with CSS keyframe animations
+6. **Remove framer-motion from WelcomeScreen** — replaced all motion.div/button with CSS animations + transitions. -1.7 KB
+7. **Remove framer-motion from AudioToggle** — CSS hover/active transitions
+8. **CSS message animations** — replaced AnimatePresence for celebration/wrong messages with CSS keyframes. Removed AnimatePresence import from KeyboardEngine. -1 KB
+9. **Remove unused deps** — clsx, tailwind-merge, class-variance-authority, Shadcn components
+10. **Remove unused config** — experimental.optimizePackageImports (LazyMotion handles tree-shaking)
+11. **Compact string data** — phrases and words stored as single strings, split at runtime
+
+### Dead Ends
+- `reactStrictMode: false` — no effect on production bundle
+- `optimizePackageImports` under experimental — no improvement with LazyMotion
+- Reducing particle count — runtime data, not code size
+- Moving `optimizePackageImports` to correct config location — actually slightly worse
+
+### Current State
+- First Load JS: 142 KB (was 156 KB, -9.0%)
+- Page chunk: 39.4 KB (was 54.3 KB, -27.4%)
+- Shared chunks: 102 KB (unchanged — Next.js + React runtime)
+- Components still using framer-motion: KeyboardEngine (m.div for letter animations, progress bar, word display), StarshipKeyboard (m.g for key animations)
+- Components freed from framer-motion: WelcomeScreen, AudioToggle, AboutModal (lazy), VictoryScreen (lazy), LevelCompleteScreen (lazy), ParticleExplosion (lazy)
