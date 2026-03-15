@@ -10,7 +10,7 @@ import {
   lazy,
   Suspense,
 } from "react";
-import { LazyMotion, domAnimation, m, AnimatePresence } from "framer-motion";
+import { LazyMotion, domAnimation, m } from "framer-motion";
 import { gameReducer, getInitialState, LEVEL_NAMES } from "@/lib/game-state";
 import {
   saveProgress,
@@ -457,48 +457,36 @@ export function KeyboardEngine() {
         {/* Message area */}
         <div style={{ minHeight: 48 }} className="relative flex items-center justify-center">
           {/* Celebration message */}
-          <AnimatePresence>
-            {state.phase === "celebrating" && state.celebrationMessage && (
-              <m.div
-                key="celebration"
-                className="glass-panel px-6 py-3 absolute"
-                initial={{ y: 20, opacity: 0, scale: 0.9 }}
-                animate={{ y: 0, opacity: 1, scale: 1 }}
-                exit={{ y: -15, opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.3 }}
+          {state.phase === "celebrating" && state.celebrationMessage && (
+            <div
+              key="celebration"
+              className="glass-panel px-6 py-3 absolute animate-msg-in"
+            >
+              <p
+                className="text-xl md:text-2xl font-semibold text-center whitespace-nowrap"
+                style={{
+                  background: "linear-gradient(135deg, #fbbf24, #f97316, #ec4899)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
               >
-                <p
-                  className="text-xl md:text-2xl font-semibold text-center whitespace-nowrap"
-                  style={{
-                    background: "linear-gradient(135deg, #fbbf24, #f97316, #ec4899)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                  }}
-                >
-                  {state.celebrationMessage}
-                </p>
-              </m.div>
-            )}
-          </AnimatePresence>
+                {state.celebrationMessage}
+              </p>
+            </div>
+          )}
 
           {/* Wrong-key message */}
-          <AnimatePresence>
-            {state.wrongKey && state.wrongKeyMessage && (
-              <m.div
-                key="wrong"
-                className="glass-panel px-6 py-3 absolute"
-                style={{ borderColor: "rgba(251, 146, 60, 0.25)" }}
-                initial={{ y: 10, opacity: 0, scale: 0.95 }}
-                animate={{ y: 0, opacity: 1, scale: 1 }}
-                exit={{ y: -10, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <p className="text-lg md:text-xl font-semibold text-center text-orange-300/90 whitespace-nowrap">
-                  {state.wrongKeyMessage}
-                </p>
-              </m.div>
-            )}
-          </AnimatePresence>
+          {state.wrongKey && state.wrongKeyMessage && (
+            <div
+              key="wrong"
+              className="glass-panel px-6 py-3 absolute animate-msg-wrong-in"
+              style={{ borderColor: "rgba(251, 146, 60, 0.25)" }}
+            >
+              <p className="text-lg md:text-xl font-semibold text-center text-orange-300/90 whitespace-nowrap">
+                {state.wrongKeyMessage}
+              </p>
+            </div>
+          )}
 
           {/* Hint text (only when playing and no other message) */}
           {state.phase === "playing" && !state.wrongKey && !state.celebrationMessage && (
