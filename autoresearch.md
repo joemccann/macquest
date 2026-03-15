@@ -68,16 +68,20 @@ Architecture: `page.tsx` uses `next/dynamic` to lazy-load `KeyboardEngine`. The 
 - Further font weight reduction — Would change visual appearance (400/500/600/700 all used).
 - `font-display: optional` — Would hide text if font doesn't load in time. Bad UX for kids app.
 
-### Current State (Experiment #8)
-- Perf: consistently 97-99 (median ~99)
-- LCP: ~2050ms (dominated by TTFB ~600ms from Vercel CDN)
-- SI: 2400-4100ms (bimodal, driven by network conditions)
-- TBT: 8-40ms (excellent)
-- FCP: ~1150ms (good)
+### Session 3 Wins (Experiments #26-#30)
+10. **Round star numeric values** — RSC payload serialized 15-decimal-place floats for 60 stars. Rounding to 1-2 decimals saved ~20KB raw HTML (~8KB gzip). Huge discovery.
+11. **Reduce stars to 40** — Further reduced RSC payload. HTML 88→72KB raw.
+12. **Make SpaceBackground client component** — Eliminated RSC serialization of star render tree entirely. HTML 72→55KB raw, 11.7→9.4KB gzip. SI=1743 (best ever).
+13. **Remove unused CSS base layer reset** — Removed `* { border-border outline-ring/50 }` and unused theme vars.
+
+### Current State (Experiment #30)
+- Perf: 97-99 (median ~97 with current CDN conditions, hits 99 when warm)
+- LCP: ~1970ms (sub-2s, 15% improvement from baseline)
+- SI: 1743-4500ms (highly variable, CDN-driven)
+- TBT: 13-87ms (excellent)
+- FCP: ~914ms (sub-second, 10% improvement from baseline)
 - A11y/SEO/BP: all 100
+- HTML: 55KB raw (9.4KB gzip) — down from 109KB raw (22KB gzip)
 
 ### Remaining Bottleneck
-LCP at ~2s is dominated by Vercel CDN TTFB (~600ms). Further improvement requires either:
-- Reducing CSS render-blocking (already minimal at ~7.6KB gzipped)
-- Reducing initial JS parsing (already at 102KB shared + 55KB page)
-- Edge caching tricks (limited by Vercel free tier)
+Speed Index variability is the main issue. It swings 1700-4500ms on identical code due to CDN cache state. When warm, we hit 99. When cold, 95-97. This is outside our control.

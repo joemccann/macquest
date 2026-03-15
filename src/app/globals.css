@@ -1,13 +1,10 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
-
 @theme inline {
   --font-sans: var(--font-fredoka);
 
   --animate-twinkle: twinkle var(--duration, 3s) ease-in-out infinite;
   --animate-float: float 8s ease-in-out infinite;
-  --animate-shimmer: shimmer 3s ease-in-out infinite;
   --animate-pulse-ring: pulse-ring 2s ease-out infinite;
   --animate-aurora: aurora 8s ease-in-out infinite alternate;
 }
