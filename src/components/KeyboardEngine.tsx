@@ -31,7 +31,9 @@ const ParticleExplosion = lazy(() =>
 import { WelcomeScreen } from "./WelcomeScreen";
 import { SpaceBackground } from "./SpaceBackground";
 import { AudioToggle } from "./AudioToggle";
-import { generatePhrase } from "@/app/actions/generate-phrase";
+// Lazy-load server action — only called during gameplay
+const generatePhrase = () =>
+  import("@/app/actions/generate-phrase").then((m) => m.generatePhrase());
 import { getRandomWrongPhrase } from "@/lib/phrases";
 import {
   getRandomSpellingPositive,
