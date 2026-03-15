@@ -323,23 +323,18 @@ export function KeyboardEngine() {
       <SpaceBackground />
       <div className="relative flex flex-col items-center min-h-screen gap-4 px-4 pt-4 pb-4 z-10">
         {/* Home button — top-left corner */}
-        <m.button
+        <button
           onClick={handleReturnHome}
-          className="absolute top-4 left-4 cursor-pointer z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
+          className="absolute top-4 left-4 cursor-pointer z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-white/40 hover:text-white/70 transition-all hover:scale-[1.06] active:scale-[0.94] animate-home-btn"
           style={{
             background: "rgba(255,255,255,0.05)",
             border: "1px solid rgba(255,255,255,0.08)",
             backdropFilter: "blur(8px)",
           }}
-          whileHover={{ scale: 1.06 }}
-          whileTap={{ scale: 0.94 }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
         >
           <span className="text-base">🏠</span>
           <span>Home</span>
-        </m.button>
+        </button>
         <AudioToggle
           muted={muted}
           onToggle={handleToggleAudio}
