@@ -1,5 +1,7 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
+
 // Deterministic seeded random for React purity
 function sr(seed: number): number {
   const x = Math.sin(seed * 9301 + 49297) * 233280;
@@ -31,7 +33,13 @@ const BRIGHT_STARS = [
   { x: 45, y: 85, color: "#f472b6", size: 3 },
 ];
 
+const subscribe = () => () => {};
+const getSnapshot = () => true;
+const getServerSnapshot = () => false;
+
 export function SpaceBackground() {
+  const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0" style={{ contain: "strict" }}>
       {/* Deep space base gradient */}
@@ -80,8 +88,8 @@ export function SpaceBackground() {
         }}
       />
 
-      {/* Star field */}
-      {STARS.map((star, i) => (
+      {/* Star field — rendered client-side only to reduce SSR HTML size */}
+      {mounted && STARS.map((star, i) => (
         <div
           key={i}
           className="absolute rounded-full animate-twinkle"
@@ -99,7 +107,7 @@ export function SpaceBackground() {
       ))}
 
       {/* Bright colored stars */}
-      {BRIGHT_STARS.map((star, i) => (
+      {mounted && BRIGHT_STARS.map((star, i) => (
         <div
           key={`bright-${i}`}
           className="absolute rounded-full animate-twinkle"

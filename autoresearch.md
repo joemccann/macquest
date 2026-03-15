@@ -74,14 +74,28 @@ Architecture: `page.tsx` uses `next/dynamic` to lazy-load `KeyboardEngine`. The 
 12. **Make SpaceBackground client component** — Eliminated RSC serialization of star render tree entirely. HTML 72→55KB raw, 11.7→9.4KB gzip. SI=1743 (best ever).
 13. **Remove unused CSS base layer reset** — Removed `* { border-border outline-ring/50 }` and unused theme vars.
 
-### Current State (Experiment #30)
-- Perf: 97-99 (median ~97 with current CDN conditions, hits 99 when warm)
-- LCP: ~1970ms (sub-2s, 15% improvement from baseline)
-- SI: 1743-4500ms (highly variable, CDN-driven)
-- TBT: 13-87ms (excellent)
-- FCP: ~914ms (sub-second, 10% improvement from baseline)
+### Session 4 Wins (Experiments #35-#39)
+14. **Reduce stars 40→25** — Fewer DOM elements, less animation paint.
+15. **Remove will-change media query** — Counterproductive on 25+ elements.
+16. **Remove contentVisibility:auto** — No SI impact, simplifies code.
+17. **Simplify box-shadow** — Removed inset shadows from glass-panel and keyboard-body.
+18. **Reduce bright stars 5→3** — Fewer animated elements.
+19. **Remove invisible grid overlay** — Was at opacity 0.02.
+20. **Reduce cosmic orbs 3→1** — Eliminated 2 blur-filter elements.
+
+### Current State (Experiment #39)
+- Perf: 97-99 (97 under poor CDN, 99 when CDN warm)
+- LCP: ~2000ms (sub-2s, 15% improvement from baseline)
+- SI: 1743-4500ms (CDN-driven; SI score=78 is the main drag)
+- TBT: 8-43ms (excellent, nearly maxed at 100)
+- FCP: ~950ms (sub-second)
+- CLS: 0 (perfect)
 - A11y/SEO/BP: all 100
-- HTML: 55KB raw (9.4KB gzip) — down from 109KB raw (22KB gzip)
+- HTML: ~48KB raw (~8.9KB gzip) — down from 109KB (22KB gzip)
+- CSS: ~34KB raw (~7KB gzip)
+- JS shared: 102KB (Next.js framework, can't reduce)
 
 ### Remaining Bottleneck
-Speed Index variability is the main issue. It swings 1700-4500ms on identical code due to CDN cache state. When warm, we hit 99. When cold, 95-97. This is outside our control.
+Speed Index at 78/100 is the only metric dragging the score from 100. At Lighthouse's simulated 1.5Mbps with 562ms RTT, SI of ~4200ms is driven by network conditions and the inherent time for a visually complex page to fully render.
+To score SI=100 would require SI < 1.3s, which is physically impossible at this bandwidth/latency.
+Score of 100 can only be achieved on very lucky CDN cache + Lighthouse throttling runs.
