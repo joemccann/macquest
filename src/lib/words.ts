@@ -1,52 +1,16 @@
 // 100 kindergarten spelling words in 5 tiers (easy → harder)
+// Stored compactly as comma-separated strings to reduce bundle size
 
-export const SPELLING_TIERS: { name: string; words: string[] }[] = [
-  {
-    name: "Tiny Words",
-    words: [
-      "cat", "dog", "sun", "hat", "red",
-      "big", "run", "sit", "cup", "bed",
-      "go", "up", "no", "me", "he",
-      "we", "is", "it", "am", "an",
-    ],
-  },
-  {
-    name: "Simple Words",
-    words: [
-      "pig", "bug", "net", "box", "map",
-      "hen", "pen", "van", "rug", "fan",
-      "log", "pot", "pin", "bat", "fox",
-      "hug", "zip", "jam", "hot", "wet",
-    ],
-  },
-  {
-    name: "Sight Words",
-    words: [
-      "the", "and", "see", "can", "you",
-      "was", "are", "but", "not", "she",
-      "his", "her", "did", "get", "new",
-      "all", "had", "one", "our", "out",
-    ],
-  },
-  {
-    name: "Action Words",
-    words: [
-      "jump", "play", "fish", "duck", "look",
-      "like", "make", "come", "find", "help",
-      "good", "blue", "down", "away", "said",
-      "they", "that", "this", "with", "have",
-    ],
-  },
-  {
-    name: "Big Words",
-    words: [
-      "black", "green", "white", "brown", "under",
-      "funny", "little", "pretty", "yellow", "three",
-      "where", "there", "please", "after", "sleep",
-      "water", "happy", "house", "going", "about",
-    ],
-  },
+const TIER_DATA: [string, string][] = [
+  ["Tiny Words", "cat,dog,sun,hat,red,big,run,sit,cup,bed,go,up,no,me,he,we,is,it,am,an"],
+  ["Simple Words", "pig,bug,net,box,map,hen,pen,van,rug,fan,log,pot,pin,bat,fox,hug,zip,jam,hot,wet"],
+  ["Sight Words", "the,and,see,can,you,was,are,but,not,she,his,her,did,get,new,all,had,one,our,out"],
+  ["Action Words", "jump,play,fish,duck,look,like,make,come,find,help,good,blue,down,away,said,they,that,this,with,have"],
+  ["Big Words", "black,green,white,brown,under,funny,little,pretty,yellow,three,where,there,please,after,sleep,water,happy,house,going,about"],
 ];
+
+export const SPELLING_TIERS: { name: string; words: string[] }[] =
+  TIER_DATA.map(([name, words]) => ({ name, words: words.split(",") }));
 
 export const SPELLING_WORDS: string[] = SPELLING_TIERS.flatMap((t) => t.words);
 
