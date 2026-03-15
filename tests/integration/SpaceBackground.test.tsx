@@ -8,11 +8,11 @@ describe("SpaceBackground", () => {
     expect(container.firstChild).toBeInTheDocument();
   });
 
-  it("renders 120 regular star elements plus 5 bright stars", () => {
+  it("renders 25 regular star elements plus 3 bright stars (client-side)", () => {
     const { container } = render(<SpaceBackground />);
-    // Regular stars and bright stars all use the animate-twinkle class
+    // Stars are deferred to client via useSyncExternalStore — rendered on mount
     const twinkleElements = container.querySelectorAll(".animate-twinkle");
-    expect(twinkleElements).toHaveLength(125); // 120 regular + 5 bright
+    expect(twinkleElements).toHaveLength(28); // 25 regular + 3 bright
   });
 
   it("renders the aurora/nebula elements", () => {
@@ -21,17 +21,15 @@ describe("SpaceBackground", () => {
     expect(auroraElements).toHaveLength(2);
   });
 
-  it("renders floating cosmic orbs", () => {
+  it("renders floating cosmic orb and ring planet", () => {
     const { container } = render(<SpaceBackground />);
     const floatingElements = container.querySelectorAll(".animate-float");
-    // 3 cosmic orbs + 1 ring planet container = 4
-    expect(floatingElements.length).toBeGreaterThanOrEqual(4);
+    // 1 cosmic orb + 1 ring planet container = 2
+    expect(floatingElements.length).toBeGreaterThanOrEqual(2);
   });
 
   it("renders the ring planet", () => {
     const { container } = render(<SpaceBackground />);
-    // The ring planet has a specific structure with rounded-full elements
-    // and a rotateX(60deg) transform for the ring
     const ringPlanet = container.querySelector(
       '[style*="rotateX(60deg)"]'
     );
@@ -49,11 +47,5 @@ describe("SpaceBackground", () => {
     const wrapper = container.firstChild as HTMLElement;
     expect(wrapper.className).toContain("fixed");
     expect(wrapper.className).toContain("inset-0");
-  });
-
-  it("has grid overlay for depth", () => {
-    const { container } = render(<SpaceBackground />);
-    const gridOverlay = container.querySelector('.opacity-\\[0\\.02\\]');
-    expect(gridOverlay).toBeInTheDocument();
   });
 });
