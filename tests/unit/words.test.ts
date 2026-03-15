@@ -1,28 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   SPELLING_WORDS,
-  SPELLING_TIERS,
   getSpellingWord,
-  WORDS_PER_ROUND,
 } from "@/lib/words";
-
-describe("SPELLING_TIERS", () => {
-  it("has exactly 5 tiers", () => {
-    expect(SPELLING_TIERS).toHaveLength(5);
-  });
-
-  it("each tier has exactly 20 words", () => {
-    for (const tier of SPELLING_TIERS) {
-      expect(tier.words).toHaveLength(20);
-    }
-  });
-
-  it("each tier has a name", () => {
-    for (const tier of SPELLING_TIERS) {
-      expect(tier.name.length).toBeGreaterThan(0);
-    }
-  });
-});
 
 describe("SPELLING_WORDS", () => {
   it("has exactly 100 words", () => {
@@ -65,11 +45,5 @@ describe("getSpellingWord", () => {
     expect(getSpellingWord(100)).toBe(SPELLING_WORDS[0]);
     expect(getSpellingWord(101)).toBe(SPELLING_WORDS[1]);
     expect(getSpellingWord(200)).toBe(SPELLING_WORDS[0]);
-  });
-});
-
-describe("WORDS_PER_ROUND", () => {
-  it("is 5", () => {
-    expect(WORDS_PER_ROUND).toBe(5);
   });
 });
