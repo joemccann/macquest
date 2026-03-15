@@ -23,7 +23,7 @@ SHARED_KB=$(echo "$BUILD_OUTPUT" | grep "First Load JS shared" | awk '{for(i=1;i
 
 # Get gzipped sizes of key chunks
 CHUNKS_DIR=".next/static/chunks"
-APP_CHUNK=$(find "$CHUNKS_DIR/app" -name "page-*.js" 2>/dev/null | head -1)
+APP_CHUNK=$(find "$CHUNKS_DIR/app" -maxdepth 1 -name "page-*.js" 2>/dev/null | head -1)
 APP_CHUNK_RAW_KB=0
 APP_CHUNK_GZ_KB=0
 if [ -n "$APP_CHUNK" ]; then
