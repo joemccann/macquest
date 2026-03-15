@@ -1,5 +1,6 @@
 import type { SaveState } from "./save-state";
-import { getSpellingWord, SPELLING_WORDS } from "./words";
+
+const TOTAL_SPELLING_WORDS = 100;
 
 export type GamePhase = "welcome" | "playing" | "celebrating" | "level-complete" | "victory" | "spelling-intro";
 
@@ -32,9 +33,9 @@ export type GameAction =
   | { type: "SET_CELEBRATION_MESSAGE"; message: string }
   | { type: "FINISH_CELEBRATION" }
   | { type: "NEXT_LEVEL" }
-  | { type: "RESUME_GAME"; save: SaveState }
-  | { type: "START_SPELLING" }
-  | { type: "NEXT_WORD" }
+  | { type: "RESUME_GAME"; save: SaveState; word?: string }
+  | { type: "START_SPELLING"; word: string }
+  | { type: "NEXT_WORD"; word: string; done: boolean }
   | { type: "RETURN_HOME" };
 
 // All keyboard keys for the final challenge level
@@ -116,7 +117,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const { save } = action;
 
       if (save.mode === "spelling") {
-        const word = getSpellingWord(save.spellingWordIndex);
+        const word = action.word || "";
         const letters = wordToLetters(word);
         const letterIndex = Math.min(save.currentLetterIndex, letters.length - 1);
         return {
@@ -166,7 +167,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case "START_SPELLING": {
-      const word = getSpellingWord(0);
+      const word = action.word;
       const letters = wordToLetters(word);
       return {
         ...state,
@@ -281,15 +282,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case "NEXT_WORD": {
-      const nextWordIndex = state.spellingWordIndex + 1;
-      if (nextWordIndex >= SPELLING_WORDS.length) {
+      if (action.done) {
         return {
           ...state,
           phase: "victory",
         };
       }
 
-      const word = getSpellingWord(nextWordIndex);
+      const nextWordIndex = state.spellingWordIndex + 1;
+      const word = action.word;
       const letters = wordToLetters(word);
       return {
         ...state,

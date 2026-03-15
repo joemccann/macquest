@@ -38,14 +38,17 @@ const AudioToggle = lazy(() =>
 // Lazy-load server action — only called during gameplay
 const generatePhrase = () =>
   import("@/app/actions/generate-phrase").then((m) => m.generatePhrase());
-// Lazy-load gameplay audio helpers — cached after first import
+// Lazy-load gameplay modules — cached after first import
 type PhrasesModule = typeof import("@/lib/phrases");
 type SpellingAudioModule = typeof import("@/lib/spelling-audio");
+type WordsModule = typeof import("@/lib/words");
 let _phrases: PhrasesModule | null = null;
 let _spelling: SpellingAudioModule | null = null;
+let _words: WordsModule | null = null;
 const preloadGameplay = () => {
   import("@/lib/phrases").then(m => { _phrases = m; });
   import("@/lib/spelling-audio").then(m => { _spelling = m; });
+  import("@/lib/words").then(m => { _words = m; });
 };
 import {
   loadMutedPreference,
@@ -198,7 +201,10 @@ export function KeyboardEngine() {
 
   const handleResume = useCallback(() => {
     if (savedGame) {
-      dispatch({ type: "RESUME_GAME", save: savedGame });
+      const word = savedGame.mode === "spelling" && _words
+        ? _words.getSpellingWord(savedGame.spellingWordIndex)
+        : undefined;
+      dispatch({ type: "RESUME_GAME", save: savedGame, word });
     }
   }, [savedGame]);
 
@@ -207,12 +213,16 @@ export function KeyboardEngine() {
   }, []);
 
   const handleStartSpelling = useCallback(() => {
-    dispatch({ type: "START_SPELLING" });
+    const word = _words ? _words.getSpellingWord(0) : "cat";
+    dispatch({ type: "START_SPELLING", word });
   }, []);
 
   const handleNextWord = useCallback(() => {
-    dispatch({ type: "NEXT_WORD" });
-  }, []);
+    const nextIdx = state.spellingWordIndex + 1;
+    const done = !_words || nextIdx >= _words.SPELLING_WORDS.length;
+    const word = done ? "" : _words!.getSpellingWord(nextIdx);
+    dispatch({ type: "NEXT_WORD", word, done });
+  }, [state.spellingWordIndex]);
 
   const handleReturnHome = useCallback(() => {
     stopCurrent();
