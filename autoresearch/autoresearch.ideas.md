@@ -1,21 +1,27 @@
-# Autoresearch Ideas — EXHAUSTED
+# Bundle Size Optimization Ideas
 
-All practical optimizations have been applied across 70 experiments in 6 sessions.
+## Explored & Applied
+- ✅ Removed framer-motion entirely (CSS animations everywhere)
+- ✅ SpaceBackground → pure CSS (box-shadow stars)
+- ✅ Lazy-load: StarshipKeyboard, WelcomeScreen, AudioToggle, AboutModal, VictoryScreen, LevelCompleteScreen, ParticleExplosion
+- ✅ Lazy-load: generatePhrase server action, phrases.ts, spelling-audio.ts, words.ts
+- ✅ Decouple words from game-state reducer (action payloads)
+- ✅ Remove unused deps (clsx, tailwind-merge, cva, lucide-react, framer-motion)
+- ✅ Compact all data strings (words, phrases, levels, level names)
+- ✅ Remove unused CSS keyframes + theme variables
+- ✅ Minify save-state + audio-preference source
+- ✅ Simplify getInitialState (no LEVELS dependency at init)
 
-## Final Achievement
-- **Baseline**: Perf=93, FCP=1020ms, LCP=2323ms, SI=4392ms, TBT=183ms, HTML=109KB
-- **Final**: Perf=97-99, FCP=~960ms, LCP=~2020ms, SI=1743-4200ms, TBT=7-45ms, HTML=33KB
-- **Improvement**: +4-6 points, 68% HTML gzip reduction, 84% TBT reduction
+## Dead Ends
+- `output: 'export'` — incompatible with server actions + sitemap/robots routes
+- `reactStrictMode: false` — no production bundle effect
+- Merging save-state + audio-preference — shared patterns compress well via gzip
+- Inlining hooks — breaks dedicated test files
+- Source-level minification (useSpeech) — webpack minifier already handles this
 
-## Why 100 Is Not Achievable
-Lighthouse v12 mobile simulation uses 1.5Mbps download + 562ms RTT + 4x CPU slowdown.
-At this throttling level, Speed Index cannot drop below ~1.3s (needed for SI score=100).
-Our SI ranges 1743-4200ms depending on CDN cache state, scoring 78-90 on SI.
-LCP at ~2000ms scores 97 (needs <1200ms for 100, impossible at 562ms simulated RTT).
-
-## Key Learnings
-1. **RSC payload is the hidden HTML bloat** — Floating-point numbers in React props get serialized with full precision. Rounding saved 20KB.
-2. **Client-side deferral of decorative elements** eliminates RSC overhead entirely — useSyncExternalStore pattern.
-3. **`contain: strict`** on fixed-position fullscreen elements significantly helps paint performance.
-4. **`optimizePackageImports`** is the single highest-impact Next.js config for TBT.
-5. **CDN cache state dominates** Lighthouse scores for deployed sites — same code scores 90-99 depending on cache warmth.
+## Why We're Done
+- 102 KB shared = Next.js 15 App Router + React 19 runtime (immovable floor)
+- 6 KB page chunk = game state reducer + localStorage persistence + 3 hooks + lazy stubs (all essential)
+- Every component except the core engine shell is lazy-loaded
+- All data files (words, phrases, audio helpers) are lazy-loaded
+- CSS handles all animations with zero JS library

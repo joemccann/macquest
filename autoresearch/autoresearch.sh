@@ -1,51 +1,60 @@
 #!/bin/bash
 set -euo pipefail
 
-URL="https://macquest.app"
+# Quick syntax check — fail fast on source file errors (skip test files)
+SRC_ERRORS=$(npx tsc --noEmit --pretty false 2>&1 | grep -v "tests/" | grep "error TS" | head -5 || true)
+if [ -n "$SRC_ERRORS" ]; then
+  echo "$SRC_ERRORS"
+  exit 1
+fi
 
-# Warm the CDN cache (hit multiple edge resources)
-curl -s -o /dev/null "$URL"
-curl -s -o /dev/null "$URL/_next/static/css/$(curl -s "$URL" | grep -o '[a-f0-9]*\.css' | head -1)" 2>/dev/null || true
-sleep 3
+# Build and capture output
+BUILD_OUTPUT=$(npx next build 2>&1)
 
-# Run Lighthouse and save JSON to temp file
-TMPJSON=$(mktemp /tmp/lighthouse-XXXXXX.json)
-trap "rm -f $TMPJSON" EXIT
+# Extract First Load JS for the main page (/)
+# Format: "○ /                                    54.3 kB         156 kB"
+FIRST_LOAD_KB=$(echo "$BUILD_OUTPUT" | grep -E '○\s+/' | head -1 | awk '{for(i=1;i<=NF;i++) if($i=="kB" && $(i-1) ~ /^[0-9.]+$/) last=$(i-1); print last}')
 
-npx lighthouse "$URL" \
-  --output=json \
-  --output-path="$TMPJSON" \
-  --chrome-flags="--headless --no-sandbox" \
-  --only-categories=performance,accessibility,best-practices,seo \
-  2>/dev/null
+# Extract page-specific JS size
+PAGE_KB=$(echo "$BUILD_OUTPUT" | grep -E '○\s+/' | head -1 | awk '{for(i=1;i<=NF;i++) if($i=="kB") {first=$(i-1); break}} END{print first}')
 
-# Extract metrics from JSON
-python3 - "$TMPJSON" <<'PYEOF'
-import json, sys
-with open(sys.argv[1]) as f:
-    data = json.load(f)
+# Extract shared JS size
+SHARED_KB=$(echo "$BUILD_OUTPUT" | grep "First Load JS shared" | awk '{for(i=1;i<=NF;i++) if($i=="kB") {print $(i-1); break}}')
 
-cats = data.get('categories', {})
-audits = data.get('audits', {})
+# Get gzipped sizes of key chunks
+CHUNKS_DIR=".next/static/chunks"
+APP_CHUNK=$(find "$CHUNKS_DIR/app" -maxdepth 1 -name "page-*.js" 2>/dev/null | head -1)
+APP_CHUNK_RAW_KB=0
+APP_CHUNK_GZ_KB=0
+if [ -n "$APP_CHUNK" ]; then
+  APP_CHUNK_RAW_KB=$(echo "scale=1; $(wc -c < "$APP_CHUNK") / 1024" | bc)
+  APP_CHUNK_GZ_KB=$(echo "scale=1; $(gzip -c "$APP_CHUNK" | wc -c) / 1024" | bc)
+fi
 
-perf = int(cats.get('performance', {}).get('score', 0) * 100)
-a11y = int(cats.get('accessibility', {}).get('score', 0) * 100)
-bp = int(cats.get('best-practices', {}).get('score', 0) * 100)
-seo = int(cats.get('seo', {}).get('score', 0) * 100)
+# Total JS across all chunks (raw)
+TOTAL_JS_RAW_KB=$(echo "scale=1; $(find "$CHUNKS_DIR" -name "*.js" -exec cat {} + | wc -c) / 1024" | bc)
+TOTAL_JS_GZ_KB=$(echo "scale=1; $(find "$CHUNKS_DIR" -name "*.js" -exec cat {} + | gzip | wc -c) / 1024" | bc)
 
-fcp = audits.get('first-contentful-paint', {}).get('numericValue', 0)
-lcp = audits.get('largest-contentful-paint', {}).get('numericValue', 0)
-tbt = audits.get('total-blocking-time', {}).get('numericValue', 0)
-cls = audits.get('cumulative-layout-shift', {}).get('numericValue', 0)
-si = audits.get('speed-index', {}).get('numericValue', 0)
+# CSS size
+CSS_DIR=".next/static/css"
+TOTAL_CSS_RAW_KB=0
+TOTAL_CSS_GZ_KB=0
+if [ -d "$CSS_DIR" ]; then
+  TOTAL_CSS_RAW_KB=$(echo "scale=1; $(find "$CSS_DIR" -name "*.css" -exec cat {} + | wc -c) / 1024" | bc)
+  TOTAL_CSS_GZ_KB=$(echo "scale=1; $(find "$CSS_DIR" -name "*.css" -exec cat {} + | gzip | wc -c) / 1024" | bc)
+fi
 
-print(f'METRIC lighthouse_perf={perf}')
-print(f'METRIC lcp_ms={lcp:.0f}')
-print(f'METRIC speed_index_ms={si:.0f}')
-print(f'METRIC tbt_ms={tbt:.0f}')
-print(f'METRIC cls={cls:.4f}')
-print(f'METRIC fcp_ms={fcp:.0f}')
-print(f'METRIC a11y={a11y}')
-print(f'METRIC seo={seo}')
-print(f'METRIC best_practices={bp}')
-PYEOF
+echo "METRIC first_load_kb=$FIRST_LOAD_KB"
+echo "METRIC page_kb=$PAGE_KB"
+echo "METRIC shared_kb=$SHARED_KB"
+echo "METRIC app_chunk_raw_kb=$APP_CHUNK_RAW_KB"
+echo "METRIC app_chunk_gz_kb=$APP_CHUNK_GZ_KB"
+echo "METRIC total_js_raw_kb=$TOTAL_JS_RAW_KB"
+echo "METRIC total_js_gz_kb=$TOTAL_JS_GZ_KB"
+echo "METRIC total_css_raw_kb=$TOTAL_CSS_RAW_KB"
+echo "METRIC total_css_gz_kb=$TOTAL_CSS_GZ_KB"
+
+# Print the full build output for reference
+echo ""
+echo "=== BUILD OUTPUT ==="
+echo "$BUILD_OUTPUT" | grep -A 20 "Route (app)"
