@@ -48,7 +48,7 @@ function LoadingShell() {
               </ul>
             </div>
 
-            <aside className="glass-panel flex flex-col gap-4 border border-white/6 px-5 py-5 text-left">
+            <aside className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 px-5 py-5 text-left">
               <div className="flex items-center gap-3">
                 <div
                   className="text-4xl"
