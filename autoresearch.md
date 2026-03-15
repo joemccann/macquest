@@ -1,7 +1,7 @@
 # Autoresearch: Bundle Size Optimization
 
 ## Objective
-Minimize the First Load JS bundle size for the main page (/) of MacQuest — a Next.js 15 typing game app. Currently at 156 KB First Load JS (54.3 KB page + 102 KB shared).
+Minimize the First Load JS bundle size for the main page (/) of MacQuest — a Next.js 15 typing game app. Started at 156 KB, optimized to **114 KB** (-26.9%).
 
 ## Metrics
 - **Primary**: first_load_kb (KB, lower is better) — total First Load JS reported by `next build`
@@ -78,8 +78,9 @@ Minimize the First Load JS bundle size for the main page (/) of MacQuest — a N
 
 ### Current State
 - First Load JS: **114 KB** (was 156 KB, **-26.9%**)
-- Page chunk: **11.4 KB** (was 54.3 KB, **-79%**)
-- Shared chunks: 102 KB (unchanged — Next.js + React runtime)
-- **framer-motion is ZERO in the initial bundle** — fully deferred to lazy-loaded components
-- All components in the initial render path use CSS animations exclusively
-- framer-motion only loads when: VictoryScreen, LevelCompleteScreen, ParticleExplosion, or AboutModal are shown
+- Page chunk: **11.3 KB** (was 54.3 KB, **-79%**)
+- Total JS gz: **246.1 KB** (was 283.9 KB, **-13.3%**)
+- Shared chunks: 102 KB (unchanged — Next.js + React runtime, the practical floor)
+- **framer-motion completely removed** — zero animation library dependency
+- All animations use CSS keyframes + transitions
+- `react`, `react-dom`, `next`, `ai`, `@ai-sdk/anthropic` are the only runtime deps

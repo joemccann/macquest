@@ -19,6 +19,73 @@ body {
   -webkit-user-select: none;
 }
 
+/* === SPACE BACKGROUND (pure CSS) === */
+.space-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+  contain: strict;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 80%, rgba(88, 28, 135, 0.25) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 20%, rgba(30, 58, 138, 0.2) 0%, transparent 55%),
+    radial-gradient(ellipse 90% 40% at 50% 50%, rgba(15, 23, 42, 0.8) 0%, transparent 70%),
+    linear-gradient(180deg, #050714 0%, #0a0f2e 30%, #0c0820 60%, #060818 100%);
+}
+
+/* Stars via box-shadow — twinkle via opacity animation */
+.space-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  animation: twinkle 4s ease-in-out infinite;
+  box-shadow:
+    9vw 34vh 0 0px rgba(255,255,255,0.49),
+    45vw 1vh 0 0px rgba(255,255,255,0.74),
+    55vw 66vh 0 1px rgba(255,255,255,0.36),
+    6vw 67vh 0 0px rgba(255,255,255,0.69),
+    23vw 85vh 0 0px rgba(255,255,255,0.56),
+    2vw 2vh 0 0px rgba(255,255,255,0.35),
+    70vw 27vh 0 1px rgba(255,255,255,0.68),
+    2vw 89vh 0 1px rgba(255,255,255,0.24),
+    52vw 15vh 0 0px rgba(255,255,255,0.55),
+    46vw 78vh 0 1px rgba(255,255,255,0.56),
+    18vw 35vh 0 1px rgba(255,255,255,0.22),
+    81vw 25vh 0 1px rgba(255,255,255,0.41),
+    73vw 78vh 0 1px rgba(255,255,255,0.61),
+    79vw 48vh 0 1px rgba(255,255,255,0.24),
+    20vw 78vh 0 1px rgba(255,255,255,0.65),
+    2vw 34vh 0 1px rgba(255,255,255,0.43),
+    74vw 28vh 0 1px rgba(255,255,255,0.54),
+    32vw 53vh 0 1px rgba(255,255,255,0.49),
+    67vw 54vh 0 0px rgba(255,255,255,0.49),
+    55vw 34vh 0 1px rgba(255,255,255,0.75),
+    7vw 6vh 0 1px rgba(255,255,255,0.67),
+    44vw 79vh 0 0px rgba(255,255,255,0.53),
+    35vw 33vh 0 1px rgba(255,255,255,0.76),
+    96vw 17vh 0 0px rgba(255,255,255,0.21),
+    71vw 87vh 0 1px rgba(255,255,255,0.74);
+}
+
+/* Bright colored stars + aurora via ::after */
+.space-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  animation: twinkle 5s ease-in-out infinite 1.5s;
+  box-shadow:
+    15vw 12vh 0 2px #a78bfa, 15vw 12vh 16px 8px #a78bfa40,
+    72vw 8vh 0 2px #60a5fa, 72vw 8vh 14px 7px #60a5fa40,
+    45vw 85vh 0 2px #f472b6, 45vw 85vh 12px 6px #f472b640;
+}
+
 /* Glass panel with colored tint */
 .glass-panel {
   background: linear-gradient(

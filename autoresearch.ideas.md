@@ -1,18 +1,18 @@
 # Bundle Size Optimization Ideas
 
 ## Explored & Applied
-- ✅ LazyMotion + m components (biggest win, -11 KB)
+- ✅ Removed framer-motion entirely (CSS animations everywhere)
 - ✅ Lazy-load AboutModal, VictoryScreen, LevelCompleteScreen, ParticleExplosion
 - ✅ Remove unused Shadcn components + deps
-- ✅ CSS-only animations for decorative emojis
-- ✅ Compact string data (phrases, words)
+- ✅ CSS-only animations for all components
+- ✅ Compact string data (phrases, words, keyboard layout)
 
 ## Ideas to Try
-- Replace SpaceBackground with pure CSS (no React component) — the stars/aurora could be CSS-only using generated CSS custom properties. Saves the component code + useSyncExternalStore overhead.
-- Move keyboard layout data to be computed from a compact format (e.g., "1234567890-=" instead of array of objects with x/y/width)
-- Extract repeated inline style objects into shared constants (many gradient/shadow values are duplicated across components)
-- Try `output: 'export'` in next.config to see if static export reduces runtime chunks
-- Move useSpeech to use a simpler implementation without AbortController overhead
-- Check if framer-motion's AnimatePresence can be replaced with CSS transitions for simple fade in/out
-- Try importing from 'framer-motion/dom' for even smaller builds
-- Server-side render the keyboard SVG as a static image, lazy-load interactive version
+- SpaceBackground as pure CSS (remove React component + useSyncExternalStore) — stars via CSS box-shadow, aurora via CSS gradient animations
+- Inline the small hooks (useMacShield, useGameKeyboard) directly into KeyboardEngine to avoid module overhead
+- Move generate-phrase server action to an API route (eliminates RSC server reference overhead in client bundle)
+- Try `output: 'export'` in next.config — static export may reduce shared Next.js runtime
+- Merge save-state.ts + audio-preference.ts into one localStorage module (reduce module boilerplate)
+- Check if `_not-found` page costs anything in shared chunks
+- Audit CSS — are all the new animation keyframes tree-shaken if unused? Any duplicates?
+- Try Brotli-aware optimizations (Next.js on Vercel serves Brotli; our gzip numbers may undercount savings)
