@@ -4,20 +4,24 @@
 - ✅ Removed framer-motion entirely (CSS animations everywhere)
 - ✅ SpaceBackground → pure CSS (box-shadow stars)
 - ✅ Lazy-load: StarshipKeyboard, WelcomeScreen, AudioToggle, AboutModal, VictoryScreen, LevelCompleteScreen, ParticleExplosion
-- ✅ Lazy-load generatePhrase server action
+- ✅ Lazy-load: generatePhrase server action, phrases.ts, spelling-audio.ts, words.ts
+- ✅ Decouple words from game-state reducer (action payloads)
 - ✅ Remove unused deps (clsx, tailwind-merge, cva, lucide-react, framer-motion)
 - ✅ Compact all data strings (words, phrases, levels, level names)
 - ✅ Remove unused CSS keyframes + theme variables
-- ✅ Remove unused Shadcn components
+- ✅ Minify save-state + audio-preference source
+- ✅ Simplify getInitialState (no LEVELS dependency at init)
 
 ## Dead Ends
 - `output: 'export'` — incompatible with server actions + sitemap/robots routes
 - `reactStrictMode: false` — no production bundle effect
 - Merging save-state + audio-preference — shared patterns compress well via gzip
 - Inlining hooks — breaks dedicated test files
+- Source-level minification (useSpeech) — webpack minifier already handles this
 
-## Remaining Opportunities (diminishing returns)
-- The 102 KB shared is Next.js 15 + React 19 immovable runtime
-- The 7 KB page chunk is mostly game-state reducer + localStorage logic + hooks — essential code
-- Could try Preact compat layer but that's a new dependency
-- Could try Pages Router instead of App Router (smaller runtime) but that's an architecture rewrite
+## Why We're Done
+- 102 KB shared = Next.js 15 App Router + React 19 runtime (immovable floor)
+- 6 KB page chunk = game state reducer + localStorage persistence + 3 hooks + lazy stubs (all essential)
+- Every component except the core engine shell is lazy-loaded
+- All data files (words, phrases, audio helpers) are lazy-loaded
+- CSS handles all animations with zero JS library

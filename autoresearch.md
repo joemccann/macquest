@@ -1,7 +1,7 @@
 # Autoresearch: Bundle Size Optimization
 
 ## Objective
-Minimize the First Load JS bundle size for the main page (/) of MacQuest — a Next.js 15 typing game app. Started at 156 KB, optimized to **114 KB** (-26.9%).
+Minimize the First Load JS bundle size for the main page (/) of MacQuest — a Next.js 15 typing game app. Started at 156 KB, optimized to **108 KB** (-30.8%).
 
 ## Metrics
 - **Primary**: first_load_kb (KB, lower is better) — total First Load JS reported by `next build`
@@ -76,15 +76,16 @@ Minimize the First Load JS bundle size for the main page (/) of MacQuest — a N
 - Reducing particle count — runtime data, not code size
 - Moving `optimizePackageImports` to correct config location — actually slightly worse
 
-### Current State (34 experiments)
-- First Load JS: **109 KB** (was 156 KB, **-30.1%**)
-- Page chunk: **7 KB** (was 54.3 KB, **-87.1%**)
-- Total JS gz: **247.5 KB** (was 283.9 KB, **-12.8%**)
+### Current State (41 experiments)
+- First Load JS: **108 KB** (was 156 KB, **-30.8%**)
+- Page chunk: **6 KB** (was 54.3 KB, **-89.0%**)
+- Total JS gz: **247.9 KB** (was 283.9 KB, **-12.7%**)
 - Shared chunks: 102 KB (unchanged — Next.js + React runtime, the immovable floor)
 - **framer-motion completely removed** — zero animation library dependency
 - SpaceBackground converted to pure CSS (box-shadow stars, gradient background)
 - All animations use CSS keyframes + transitions
-- Lazy-loaded: StarshipKeyboard, WelcomeScreen, AudioToggle, AboutModal, VictoryScreen, LevelCompleteScreen, ParticleExplosion, generatePhrase server action
+- Lazy-loaded: StarshipKeyboard, WelcomeScreen, AudioToggle, AboutModal, VictoryScreen, LevelCompleteScreen, ParticleExplosion, generatePhrase server action, phrases.ts, spelling-audio.ts, words.ts
+- Words decoupled from game-state reducer (passed via action payloads)
 - `react`, `react-dom`, `next`, `ai`, `@ai-sdk/anthropic` are the only runtime deps
-- The 7 KB page chunk contains: game state reducer, save-state, audio-preference, hooks, phrases, words, spelling-audio, lazy-load stubs
+- The 6 KB page chunk contains: game state reducer, save-state, audio-preference, useSpeech/useMacShield/useGameKeyboard hooks, LEVELS data, lazy-load stubs
 - 102 KB shared is Next.js 15 + React 19 runtime — irreducible without framework changes
