@@ -1,3 +1,5 @@
+"use client";
+
 // Deterministic seeded random for React purity
 function sr(seed: number): number {
   const x = Math.sin(seed * 9301 + 49297) * 233280;

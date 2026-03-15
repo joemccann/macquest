@@ -1,14 +1,24 @@
 # Autoresearch Ideas
 
-## Promising but Complex
-- **Reduce Tailwind CSS output**: The remaining 34KB CSS is mostly Tailwind utility classes. Could try `content` config to scan only used classes, but Tailwind v4 already does this automatically. Might investigate if something is generating extra classes.
-- **Replace framer-motion with CSS animations**: framer-motion adds ~46KB to shared JS. Many animations (WelcomeScreen floating emojis, button hover/tap) could be CSS-only. Major refactor.
-- **Use CSS-only SpaceBackground**: Replace React-rendered stars with CSS-only implementation (radial-gradient dots, single element with box-shadows). Eliminates 60+ DOM nodes.
-- **Split Fredoka into per-weight files**: Load only weight 700 initially (for bold headings), lazy-load 400/500/600 after first paint.
-- **Inline critical CSS manually**: Extract the ~2KB of CSS needed for above-fold content and inline it in the HTML head. Eliminates CSS as render-blocking resource.
-- **Server-side generate the loading shell as static HTML**: Instead of using next/dynamic loading, generate the full loading shell at build time and serve as pure HTML with minimal JS.
+## Tried and Stale (DO NOT RETRY)
+- ~~Variable font (no explicit weights)~~ — Consistently 96, vs 97-99 with explicit weights. May hurt.
+- ~~CSS-only SpaceBackground with box-shadows~~ — Worse performance (box-shadow is more expensive to paint).
+- ~~Remove blur filters from aurora/orbs~~ — Regression (Perf 93 vs 98).
+- ~~content-visibility: auto~~ — Already in code from earlier experiment. Minimal impact.
+- ~~will-change on animated elements~~ — Counterproductive (too many compositing layers).
+- ~~Inline critical CSS in head~~ — No measurable improvement.
 
-## Quick Tests Still Worth Trying
-- **Remove `backdrop-filter` from loading shell glass-panels**: The blur effect is GPU-expensive and affects initial paint time. Could use solid semi-transparent background instead.
-- **Reduce CSS custom properties**: Still ~20 unused CSS vars from Tailwind theme defaults.
-- **Try `fetchPriority="high"` on font preload link**: Next.js may already do this but worth verifying.
+## Key Discovery
+- **RSC payload size is huge** — The SpaceBackground's 60 star elements with 15-decimal-place numbers added ~30KB to HTML document. Rounding to integers/1 decimal saves ~20KB raw (~8KB gzip). This was the biggest win in session 3.
+
+## Still Promising
+- **Further reduce star count** — Each star saves ~300B RSC payload + DOM node. Currently at 40, could try 25-30.
+- **Replace framer-motion with CSS animations** — NOT for performance (it's in dynamic chunk), but for reducing the dynamic chunk size (124KB → could be ~80KB). Only helps load time of interactive mode, not Lighthouse.
+- **Reduce SEO text verbosity** — The loading shell duplicates text in both rendered HTML and RSC payload. Shorter SEO text = smaller document.
+- **Move SpaceBackground back to client component** — As a server component, stars get serialized in RSC payload. As a client component, the star generation happens on the client with no RSC overhead. BUT the rendering would be delayed. Trade-off worth testing.
+
+## Network Reality
+- Lighthouse scores fluctuate ±5 points between runs due to CDN cache state and simulated throttling
+- SI is the most volatile metric (2000-6800ms range on identical code)
+- FCP and LCP are more stable indicators of real improvement
+- Cache warming curl in autoresearch.sh helps but doesn't eliminate variance
