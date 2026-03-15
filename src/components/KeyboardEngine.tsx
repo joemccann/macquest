@@ -23,7 +23,9 @@ import { useMacShield } from "@/hooks/useMacShield";
 import { useGameKeyboard } from "@/hooks/useGameKeyboard";
 import { useSpeech } from "@/hooks/useSpeech";
 import { StarshipKeyboard } from "./StarshipKeyboard";
-import { ParticleExplosion } from "./ParticleExplosion";
+const ParticleExplosion = lazy(() =>
+  import("./ParticleExplosion").then((m) => ({ default: m.ParticleExplosion }))
+);
 import { WelcomeScreen } from "./WelcomeScreen";
 import { SpaceBackground } from "./SpaceBackground";
 import { AudioToggle } from "./AudioToggle";
@@ -444,10 +446,12 @@ export function KeyboardEngine() {
             </div>
           </m.div>
 
-          <ParticleExplosion
-            active={state.phase === "celebrating"}
-            id={explosionId}
-          />
+          <Suspense fallback={null}>
+            <ParticleExplosion
+              active={state.phase === "celebrating"}
+              id={explosionId}
+            />
+          </Suspense>
         </div>
 
         {/* Message area */}
