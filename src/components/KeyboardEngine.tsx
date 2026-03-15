@@ -22,7 +22,9 @@ import type { SaveState } from "@/lib/save-state";
 import { useMacShield } from "@/hooks/useMacShield";
 import { useGameKeyboard } from "@/hooks/useGameKeyboard";
 import { useSpeech } from "@/hooks/useSpeech";
-import { StarshipKeyboard } from "./StarshipKeyboard";
+const StarshipKeyboard = lazy(() =>
+  import("./StarshipKeyboard").then((m) => ({ default: m.StarshipKeyboard }))
+);
 const ParticleExplosion = lazy(() =>
   import("./ParticleExplosion").then((m) => ({ default: m.ParticleExplosion }))
 );
@@ -506,10 +508,12 @@ export function KeyboardEngine() {
         <div className="flex-1" />
 
         {/* Keyboard — pinned near bottom */}
-        <StarshipKeyboard
-          targetLetter={state.targetLetter}
-          pressedKey={state.phase === "celebrating" ? pressedKey : null}
-        />
+        <Suspense fallback={null}>
+          <StarshipKeyboard
+            targetLetter={state.targetLetter}
+            pressedKey={state.phase === "celebrating" ? pressedKey : null}
+          />
+        </Suspense>
       </div>
     </>
   );
