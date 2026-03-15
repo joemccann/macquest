@@ -96,22 +96,22 @@ function LoadingShell() {
             {SEO_MODE_CARDS.map((mode) => (
               <article
                 key={mode.title}
-                className="glass-panel flex flex-col gap-3 px-6 py-6"
+                className="rounded-3xl border border-white/10 bg-white/5 px-6 py-6"
               >
                 <h2 className="text-2xl font-semibold text-white">
                   {mode.title}
                 </h2>
-                <p className="text-base leading-relaxed text-white/72">
+                <p className="mt-3 text-base leading-relaxed text-white/72">
                   {mode.summary}
                 </p>
-                <p className="text-sm leading-relaxed text-white/58">
+                <p className="mt-2 text-sm leading-relaxed text-white/58">
                   {mode.detail}
                 </p>
               </article>
             ))}
           </section>
 
-          <section className="glass-panel px-6 py-6 md:px-8">
+          <section className="rounded-3xl border border-white/10 bg-white/5 px-6 py-6 md:px-8">
             <h2 className="text-2xl font-semibold text-white">
               Why families use MacQuest
             </h2>
