@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Optimize third-party packages for tree-shaking
-  optimizePackageImports: ["framer-motion"],
+  // Disable strict mode double-rendering in production (smaller runtime)
+  reactStrictMode: false,
+
+
 
   // Enable gzip compression
   compress: true,

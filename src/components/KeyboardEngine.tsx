@@ -7,8 +7,10 @@ import {
   useState,
   useEffect,
   useSyncExternalStore,
+  lazy,
+  Suspense,
 } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+
 import { gameReducer, getInitialState, LEVEL_NAMES } from "@/lib/game-state";
 import {
   saveProgress,
@@ -20,25 +22,46 @@ import type { SaveState } from "@/lib/save-state";
 import { useMacShield } from "@/hooks/useMacShield";
 import { useGameKeyboard } from "@/hooks/useGameKeyboard";
 import { useSpeech } from "@/hooks/useSpeech";
-import { StarshipKeyboard } from "./StarshipKeyboard";
-import { ParticleExplosion } from "./ParticleExplosion";
-import { WelcomeScreen } from "./WelcomeScreen";
+const StarshipKeyboard = lazy(() =>
+  import("./StarshipKeyboard").then((m) => ({ default: m.StarshipKeyboard }))
+);
+const ParticleExplosion = lazy(() =>
+  import("./ParticleExplosion").then((m) => ({ default: m.ParticleExplosion }))
+);
+const WelcomeScreen = lazy(() =>
+  import("./WelcomeScreen").then((m) => ({ default: m.WelcomeScreen }))
+);
 import { SpaceBackground } from "./SpaceBackground";
-import { AudioToggle } from "./AudioToggle";
-import { generatePhrase } from "@/app/actions/generate-phrase";
-import { getRandomWrongPhrase } from "@/lib/phrases";
-import {
-  getRandomSpellingPositive,
-  getSpellingWrongAudio,
-  getLetterAudio,
-  getSpellWordAudio,
-  getWordAudio,
-} from "@/lib/spelling-audio";
+const AudioToggle = lazy(() =>
+  import("./AudioToggle").then((m) => ({ default: m.AudioToggle }))
+);
+// Lazy-load server action — only called during gameplay
+const generatePhrase = () =>
+  import("@/app/actions/generate-phrase").then((m) => m.generatePhrase());
+// Lazy-load gameplay modules — cached after first import
+type PhrasesModule = typeof import("@/lib/phrases");
+type SpellingAudioModule = typeof import("@/lib/spelling-audio");
+type WordsModule = typeof import("@/lib/words");
+let _phrases: PhrasesModule | null = null;
+let _spelling: SpellingAudioModule | null = null;
+let _words: WordsModule | null = null;
+const preloadGameplay = () => {
+  import("@/lib/phrases").then(m => { _phrases = m; });
+  import("@/lib/spelling-audio").then(m => { _spelling = m; });
+  import("@/lib/words").then(m => { _words = m; });
+};
 import {
   loadMutedPreference,
   saveMutedPreference,
   subscribeToMutedPreference,
 } from "@/lib/audio-preference";
+
+const VictoryScreen = lazy(() =>
+  import("./VictoryScreen").then((m) => ({ default: m.VictoryScreen }))
+);
+const LevelCompleteScreen = lazy(() =>
+  import("./LevelCompleteScreen").then((m) => ({ default: m.LevelCompleteScreen }))
+);
 
 function subscribeToSavedGame(onStoreChange: () => void) {
   if (typeof window === "undefined") {
@@ -79,6 +102,9 @@ export function KeyboardEngine() {
   const { speak, speakSequence, stopCurrent } = useSpeech({ muted });
   const lastSpellingWord = useRef<string>("");
 
+  // Preload gameplay modules in background
+  useEffect(() => { preloadGameplay(); }, []);
+
   useMacShield();
 
   // Save progress on level-complete and next-level
@@ -99,7 +125,7 @@ export function KeyboardEngine() {
       lastSpellingWord.current = state.currentWord;
       // Small delay so the UI renders first
       const timer = setTimeout(() => {
-        speak("", getSpellWordAudio(state.currentWord));
+        if (_spelling) speak("", _spelling.getSpellWordAudio(state.currentWord));
       }, 300);
       return () => clearTimeout(timer);
     }
@@ -116,9 +142,9 @@ export function KeyboardEngine() {
     if (isSpelling) {
       if (isLastLetter) {
         // Word complete: say the word → positive affirmation
-        const positive = getRandomSpellingPositive();
-        const wordAudio = getWordAudio(state.currentWord);
-        speakSequence([wordAudio, positive.audioFile]);
+        const positive = _spelling?.getRandomSpellingPositive();
+        const wordAudio = _spelling?.getWordAudio(state.currentWord);
+        if (wordAudio && positive) speakSequence([wordAudio, positive.audioFile]);
         dispatch({ type: "SET_CELEBRATION_MESSAGE", message: `${state.currentWord.toUpperCase()}!` });
         celebrationTimer.current = setTimeout(() => {
           setPressedKey(null);
@@ -126,7 +152,7 @@ export function KeyboardEngine() {
         }, 3500);
       } else {
         // Individual letter: say the letter name
-        speak("", getLetterAudio(state.targetLetter));
+        if (_spelling) speak("", _spelling.getLetterAudio(state.targetLetter));
         celebrationTimer.current = setTimeout(() => {
           setPressedKey(null);
           dispatch({ type: "FINISH_CELEBRATION" });
@@ -150,11 +176,13 @@ export function KeyboardEngine() {
 
     if (state.mode === "spelling") {
       dispatch({ type: "WRONG_KEY", message: "Try Again!" });
-      speak("Try Again!", getSpellingWrongAudio());
+      if (_spelling) speak("Try Again!", _spelling.getSpellingWrongAudio());
     } else {
-      const result = getRandomWrongPhrase();
-      dispatch({ type: "WRONG_KEY", message: result.text });
-      speak(result.text, result.audioFile);
+      const result = _phrases?.getRandomWrongPhrase();
+      if (result) {
+        dispatch({ type: "WRONG_KEY", message: result.text });
+        speak(result.text, result.audioFile);
+      }
     }
     wrongTimer.current = setTimeout(() => dispatch({ type: "CLEAR_WRONG" }), 2500);
   }, [speak, state.mode]);
@@ -173,7 +201,10 @@ export function KeyboardEngine() {
 
   const handleResume = useCallback(() => {
     if (savedGame) {
-      dispatch({ type: "RESUME_GAME", save: savedGame });
+      const word = savedGame.mode === "spelling" && _words
+        ? _words.getSpellingWord(savedGame.spellingWordIndex)
+        : undefined;
+      dispatch({ type: "RESUME_GAME", save: savedGame, word });
     }
   }, [savedGame]);
 
@@ -182,12 +213,16 @@ export function KeyboardEngine() {
   }, []);
 
   const handleStartSpelling = useCallback(() => {
-    dispatch({ type: "START_SPELLING" });
+    const word = _words ? _words.getSpellingWord(0) : "cat";
+    dispatch({ type: "START_SPELLING", word });
   }, []);
 
   const handleNextWord = useCallback(() => {
-    dispatch({ type: "NEXT_WORD" });
-  }, []);
+    const nextIdx = state.spellingWordIndex + 1;
+    const done = !_words || nextIdx >= _words.SPELLING_WORDS.length;
+    const word = done ? "" : _words!.getSpellingWord(nextIdx);
+    dispatch({ type: "NEXT_WORD", word, done });
+  }, [state.spellingWordIndex]);
 
   const handleReturnHome = useCallback(() => {
     stopCurrent();
@@ -211,313 +246,73 @@ export function KeyboardEngine() {
       <>
         <SpaceBackground />
         <div className="relative min-h-screen">
-          <AudioToggle
-            muted={muted}
-            onToggle={handleToggleAudio}
-            className="absolute top-4 right-4 z-20"
-          />
-          <WelcomeScreen
-            onStart={handleStart}
-            onStartSpelling={handleStartSpelling}
-            onResume={savedGame ? handleResume : undefined}
-            savedLevel={savedGame ? savedGame.currentLevel + 1 : undefined}
-            savedScore={savedGame?.score}
-          />
+          <Suspense fallback={null}>
+            <AudioToggle
+              muted={muted}
+              onToggle={handleToggleAudio}
+              className="absolute top-4 right-4 z-20"
+            />
+          </Suspense>
+          <Suspense fallback={null}>
+            <WelcomeScreen
+              onStart={handleStart}
+              onStartSpelling={handleStartSpelling}
+              onResume={savedGame ? handleResume : undefined}
+              savedLevel={savedGame ? savedGame.currentLevel + 1 : undefined}
+              savedScore={savedGame?.score}
+            />
+          </Suspense>
         </div>
       </>
     );
   }
 
   if (state.phase === "victory") {
-    const isSpellingVictory = state.mode === "spelling";
-
     return (
       <>
         <SpaceBackground />
-        <div className="flex flex-col items-center justify-center min-h-screen gap-8 px-4 relative z-10">
-          {/* Home button */}
-          <motion.button
-            onClick={handleReturnHome}
-            className="absolute top-4 left-4 cursor-pointer z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
-            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(8px)" }}
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.94 }}
-          >
-            <span className="text-base">🏠</span>
-            <span>Home</span>
-          </motion.button>
-          <AudioToggle
+        <Suspense fallback={null}>
+          <VictoryScreen
+            isSpelling={state.mode === "spelling"}
+            score={state.score}
+            perfectLevels={state.perfectLevels}
+            mode={state.mode}
             muted={muted}
-            onToggle={handleToggleAudio}
-            className="absolute top-4 right-4 z-20"
+            onToggleAudio={handleToggleAudio}
+            onReturnHome={handleReturnHome}
+            onStartSpelling={handleStartSpelling}
+            onStart={handleStart}
           />
-
-          <motion.div
-            className="text-8xl"
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: "spring", stiffness: 200, damping: 10 }}
-          >
-            {isSpellingVictory ? "🎓" : "🏆"}
-          </motion.div>
-
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
-            className="text-center"
-          >
-            <h2
-              className="text-5xl md:text-7xl font-bold mb-3"
-              style={{
-                background: "linear-gradient(135deg, #fbbf24 0%, #f97316 30%, #ec4899 60%, #c084fc 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                filter: "drop-shadow(0 4px 16px rgba(251, 191, 36, 0.3))",
-              }}
-            >
-              {isSpellingVictory ? "Spelling Champion!" : "You Won!"}
-            </h2>
-            <p className="text-xl text-white/50 font-medium">
-              {isSpellingVictory
-                ? "You spelled all 100 words!"
-                : "You mastered the entire keyboard!"}
-            </p>
-          </motion.div>
-
-          <motion.div
-            className="glass-panel px-10 py-6 text-center"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4 }}
-          >
-            <p className="text-sm text-white/40 mb-1">Final Score</p>
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-3xl">⭐</span>
-              <span
-                className="text-5xl font-bold"
-                style={{
-                  background: "linear-gradient(135deg, #fbbf24, #f97316)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
-                {state.score.toLocaleString()}
-              </span>
-            </div>
-            {state.perfectLevels.length > 0 && (
-              <p className="text-sm text-white/40 mt-3">
-                {state.perfectLevels.length} perfect {state.mode === "spelling" ? "word" : "level"}{state.perfectLevels.length !== 1 ? "s" : ""}!
-              </p>
-            )}
-          </motion.div>
-
-          {/* Keys victory: show both "Start Spelling" and "Play Again" */}
-          {!isSpellingVictory && (
-            <motion.div
-              className="flex flex-col items-center gap-3"
-              initial={{ y: 30, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.6 }}
-            >
-              <p className="text-lg text-white/40 font-medium">
-                Ready to start spelling words?
-              </p>
-              <motion.button
-                onClick={handleStartSpelling}
-                className="relative group cursor-pointer"
-                whileHover={{ scale: 1.06 }}
-                whileTap={{ scale: 0.94 }}
-              >
-                <div
-                  className="absolute -inset-2 rounded-full opacity-50 group-hover:opacity-70 transition-opacity"
-                  style={{
-                    background: "linear-gradient(135deg, #34d399, #3b82f6)",
-                    filter: "blur(14px)",
-                  }}
-                />
-                <div
-                  className="relative px-14 py-5 rounded-full text-2xl font-bold text-white"
-                  style={{
-                    background: "linear-gradient(135deg, #10b981 0%, #3b82f6 100%)",
-                    boxShadow: "0 4px 24px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.15)",
-                  }}
-                >
-                  Start Spelling Words!
-                </div>
-              </motion.button>
-            </motion.div>
-          )}
-
-          <motion.button
-            onClick={handleStart}
-            className="relative group cursor-pointer"
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: isSpellingVictory ? 0.8 : 1.0 }}
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.94 }}
-          >
-            <div
-              className="absolute -inset-2 rounded-full opacity-50 group-hover:opacity-70 transition-opacity"
-              style={{
-                background: "linear-gradient(135deg, #f472b6, #c084fc, #38bdf8)",
-                filter: "blur(14px)",
-              }}
-            />
-            <div
-              className="relative px-14 py-5 rounded-full text-2xl font-bold text-white"
-              style={{
-                background: isSpellingVictory
-                  ? "linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #3b82f6 100%)"
-                  : "rgba(255,255,255,0.1)",
-                boxShadow: isSpellingVictory
-                  ? "0 4px 24px rgba(139, 92, 246, 0.4), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.15)"
-                  : "inset 0 1px 0 rgba(255,255,255,0.1)",
-              }}
-            >
-              Play Again
-            </div>
-          </motion.button>
-        </div>
+        </Suspense>
       </>
     );
   }
 
   if (state.phase === "level-complete") {
-    const isPerfect = state.bonusAwarded > 0;
-    const isSpelling = state.mode === "spelling";
-
     return (
       <>
         <SpaceBackground />
-        <div className="flex flex-col items-center justify-center min-h-screen gap-8 px-4 relative z-10">
-          {/* Home button */}
-          <motion.button
-            onClick={handleReturnHome}
-            className="absolute top-4 left-4 cursor-pointer z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
-            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(8px)" }}
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.94 }}
-          >
-            <span className="text-base">🏠</span>
-            <span>Home</span>
-          </motion.button>
-          <AudioToggle
+        <Suspense fallback={null}>
+          <LevelCompleteScreen
+            isSpelling={state.mode === "spelling"}
+            isPerfect={state.bonusAwarded > 0}
+            score={state.score}
+            bonusAwarded={state.bonusAwarded}
+            currentWord={state.currentWord}
+            lettersLength={state.letters.length}
             muted={muted}
-            onToggle={handleToggleAudio}
-            className="absolute top-4 right-4 z-20"
+            onToggleAudio={handleToggleAudio}
+            onReturnHome={handleReturnHome}
+            onNext={state.mode === "spelling" ? handleNextWord : handleNextLevel}
           />
-
-          {/* Celebration emoji */}
-          <motion.div
-            className="text-8xl"
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: "spring", stiffness: 200, damping: 10 }}
-          >
-            {isPerfect ? "🌟" : "🎉"}
-          </motion.div>
-
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
-            className="text-center"
-          >
-            <h2
-              className="text-5xl md:text-7xl font-bold mb-3"
-              style={{
-                background: "linear-gradient(135deg, #fbbf24 0%, #f97316 30%, #ec4899 60%, #c084fc 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                filter: "drop-shadow(0 4px 16px rgba(251, 191, 36, 0.3))",
-              }}
-            >
-              {isSpelling ? "Word Complete!" : "Level Complete!"}
-            </h2>
-            <p className="text-xl text-white/50 font-medium">
-              {isSpelling
-                ? `You spelled "${state.currentWord.toUpperCase()}"!`
-                : `You typed ${state.letters.length} letters!`}
-            </p>
-          </motion.div>
-
-          {/* Score summary */}
-          <motion.div
-            className="glass-panel px-8 py-5 text-center"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4 }}
-          >
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <span className="text-2xl">⭐</span>
-              <span
-                className="text-3xl font-bold"
-                style={{
-                  background: "linear-gradient(135deg, #fbbf24, #f97316)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
-                {state.score.toLocaleString()}
-              </span>
-            </div>
-            {isPerfect && (
-              <motion.p
-                className="text-lg font-semibold mt-2"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", delay: 0.6 }}
-                style={{
-                  background: "linear-gradient(135deg, #34d399, #38bdf8)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
-                PERFECT! Bonus: +{state.bonusAwarded.toLocaleString()}
-              </motion.p>
-            )}
-          </motion.div>
-
-          <motion.button
-            onClick={isSpelling ? handleNextWord : handleNextLevel}
-            className="relative group cursor-pointer"
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.94 }}
-          >
-            <div
-              className="absolute -inset-2 rounded-full opacity-50 group-hover:opacity-70 transition-opacity"
-              style={{
-                background: "linear-gradient(135deg, #34d399, #3b82f6)",
-                filter: "blur(14px)",
-              }}
-            />
-            <div
-              className="relative px-14 py-5 rounded-full text-2xl font-bold text-white"
-              style={{
-                background: "linear-gradient(135deg, #10b981 0%, #3b82f6 100%)",
-                boxShadow: "0 4px 24px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.15)",
-              }}
-            >
-              {isSpelling ? "Next Word →" : "Next Level →"}
-            </div>
-          </motion.button>
-        </div>
+        </Suspense>
       </>
     );
   }
 
   // Spelling mode: word display above the target letter
   const wordDisplay = state.mode === "spelling" && state.currentWord ? (
-    <motion.div
-      className="glass-panel px-8 py-4"
-      initial={{ y: -10, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-    >
+    <div className="glass-panel px-8 py-4 animate-word-in">
       <div className="flex items-center justify-center gap-2 md:gap-3">
         {state.currentWord.toUpperCase().split("").map((letter, i) => (
           <span
@@ -544,7 +339,7 @@ export function KeyboardEngine() {
           </span>
         ))}
       </div>
-    </motion.div>
+    </div>
   ) : null;
 
   return (
@@ -552,28 +347,25 @@ export function KeyboardEngine() {
       <SpaceBackground />
       <div className="relative flex flex-col items-center min-h-screen gap-4 px-4 pt-4 pb-4 z-10">
         {/* Home button — top-left corner */}
-        <motion.button
+        <button
           onClick={handleReturnHome}
-          className="absolute top-4 left-4 cursor-pointer z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
+          className="absolute top-4 left-4 cursor-pointer z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-white/40 hover:text-white/70 transition-all hover:scale-[1.06] active:scale-[0.94] animate-home-btn"
           style={{
             background: "rgba(255,255,255,0.05)",
             border: "1px solid rgba(255,255,255,0.08)",
             backdropFilter: "blur(8px)",
           }}
-          whileHover={{ scale: 1.06 }}
-          whileTap={{ scale: 0.94 }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
         >
           <span className="text-base">🏠</span>
           <span>Home</span>
-        </motion.button>
-        <AudioToggle
-          muted={muted}
-          onToggle={handleToggleAudio}
-          className="absolute top-4 right-4 z-20"
-        />
+        </button>
+        <Suspense fallback={null}>
+          <AudioToggle
+            muted={muted}
+            onToggle={handleToggleAudio}
+            className="absolute top-4 right-4 z-20"
+          />
+        </Suspense>
 
         {/* Header bar — pinned near top */}
         <div className="w-full max-w-2xl">
@@ -615,16 +407,14 @@ export function KeyboardEngine() {
 
             {/* Progress bar */}
             <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-white/5">
-              <motion.div
-                className="h-full rounded-full"
+              <div
+                className="h-full rounded-full transition-[width] duration-500 ease-out"
                 style={{
+                  width: `${progress}%`,
                   background: "linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6, #34d399)",
                   backgroundSize: "200% 100%",
                   boxShadow: "0 0 12px rgba(139, 92, 246, 0.4)",
                 }}
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
               />
               {/* Shimmer overlay */}
               <div
@@ -647,20 +437,9 @@ export function KeyboardEngine() {
 
         {/* Target letter display */}
         <div className="relative flex items-center justify-center" style={{ minHeight: 200 }}>
-          <motion.div
+          <div
             key={state.targetLetter + state.currentLetterIndex}
-            className="letter-halo"
-            initial={{ scale: 0.3, opacity: 0 }}
-            animate={
-              state.wrongKey
-                ? { scale: 1, opacity: 1, x: [0, -12, 12, -12, 12, 0] }
-                : { scale: 1, opacity: 1, x: 0 }
-            }
-            transition={
-              state.wrongKey
-                ? { duration: 0.4, ease: "easeInOut" }
-                : { type: "spring", stiffness: 250, damping: 15 }
-            }
+            className={`letter-halo ${state.wrongKey ? "animate-letter-shake" : "animate-letter-in"}`}
           >
             <div
               className="text-[140px] md:text-[180px] font-bold leading-none select-none text-center"
@@ -673,59 +452,49 @@ export function KeyboardEngine() {
             >
               {state.targetLetter}
             </div>
-          </motion.div>
+          </div>
 
-          <ParticleExplosion
-            active={state.phase === "celebrating"}
-            id={explosionId}
-          />
+          <Suspense fallback={null}>
+            <ParticleExplosion
+              active={state.phase === "celebrating"}
+              id={explosionId}
+            />
+          </Suspense>
         </div>
 
         {/* Message area */}
         <div style={{ minHeight: 48 }} className="relative flex items-center justify-center">
           {/* Celebration message */}
-          <AnimatePresence>
-            {state.phase === "celebrating" && state.celebrationMessage && (
-              <motion.div
-                key="celebration"
-                className="glass-panel px-6 py-3 absolute"
-                initial={{ y: 20, opacity: 0, scale: 0.9 }}
-                animate={{ y: 0, opacity: 1, scale: 1 }}
-                exit={{ y: -15, opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.3 }}
+          {state.phase === "celebrating" && state.celebrationMessage && (
+            <div
+              key="celebration"
+              className="glass-panel px-6 py-3 absolute animate-msg-in"
+            >
+              <p
+                className="text-xl md:text-2xl font-semibold text-center whitespace-nowrap"
+                style={{
+                  background: "linear-gradient(135deg, #fbbf24, #f97316, #ec4899)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
               >
-                <p
-                  className="text-xl md:text-2xl font-semibold text-center whitespace-nowrap"
-                  style={{
-                    background: "linear-gradient(135deg, #fbbf24, #f97316, #ec4899)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                  }}
-                >
-                  {state.celebrationMessage}
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                {state.celebrationMessage}
+              </p>
+            </div>
+          )}
 
           {/* Wrong-key message */}
-          <AnimatePresence>
-            {state.wrongKey && state.wrongKeyMessage && (
-              <motion.div
-                key="wrong"
-                className="glass-panel px-6 py-3 absolute"
-                style={{ borderColor: "rgba(251, 146, 60, 0.25)" }}
-                initial={{ y: 10, opacity: 0, scale: 0.95 }}
-                animate={{ y: 0, opacity: 1, scale: 1 }}
-                exit={{ y: -10, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <p className="text-lg md:text-xl font-semibold text-center text-orange-300/90 whitespace-nowrap">
-                  {state.wrongKeyMessage}
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {state.wrongKey && state.wrongKeyMessage && (
+            <div
+              key="wrong"
+              className="glass-panel px-6 py-3 absolute animate-msg-wrong-in"
+              style={{ borderColor: "rgba(251, 146, 60, 0.25)" }}
+            >
+              <p className="text-lg md:text-xl font-semibold text-center text-orange-300/90 whitespace-nowrap">
+                {state.wrongKeyMessage}
+              </p>
+            </div>
+          )}
 
           {/* Hint text (only when playing and no other message) */}
           {state.phase === "playing" && !state.wrongKey && !state.celebrationMessage && (
@@ -767,10 +536,12 @@ export function KeyboardEngine() {
         <div className="flex-1" />
 
         {/* Keyboard — pinned near bottom */}
-        <StarshipKeyboard
-          targetLetter={state.targetLetter}
-          pressedKey={state.phase === "celebrating" ? pressedKey : null}
-        />
+        <Suspense fallback={null}>
+          <StarshipKeyboard
+            targetLetter={state.targetLetter}
+            pressedKey={state.phase === "celebrating" ? pressedKey : null}
+          />
+        </Suspense>
       </div>
     </>
   );

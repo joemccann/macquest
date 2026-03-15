@@ -1,7 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
-
 function VolumeOnIcon({ className }: { className?: string }) {
   return (
     <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -36,12 +34,12 @@ export function AudioToggle({
   const Icon = muted ? VolumeOffIcon : VolumeOnIcon;
 
   return (
-    <motion.button
+    <button
       type="button"
       onClick={onToggle}
       aria-pressed={muted}
       aria-label={muted ? "Unmute sound" : "Mute sound"}
-      className={`cursor-pointer rounded-full px-3 py-1.5 text-sm font-medium text-white/70 transition-colors hover:text-white ${className}`.trim()}
+      className={`cursor-pointer rounded-full px-3 py-1.5 text-sm font-medium text-white/70 transition-all hover:text-white hover:scale-[1.06] active:scale-[0.94] animate-audio-toggle ${className}`.trim()}
       style={{
         background: muted
           ? "rgba(255,255,255,0.05)"
@@ -54,11 +52,6 @@ export function AudioToggle({
           : "0 0 18px rgba(59, 130, 246, 0.12), inset 0 1px 0 rgba(255,255,255,0.12)",
         backdropFilter: "blur(10px)",
       }}
-      whileHover={{ scale: 1.06 }}
-      whileTap={{ scale: 0.94 }}
-      initial={{ opacity: 0, y: -6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.45 }}
     >
       <span className="flex items-center gap-2">
         <span
@@ -75,6 +68,6 @@ export function AudioToggle({
           {muted ? "Muted" : "Sound On"}
         </span>
       </span>
-    </motion.button>
+    </button>
   );
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { ALL_ROWS, type KeyData } from "@/lib/keyboard-layout";
 
 interface StarshipKeyboardProps {
@@ -40,20 +39,15 @@ function KeyCap({
 
   const depth = 4;
 
+  // Determine transform for the key group
+  const yOffset = isPressed && isTarget ? depth : 0;
+
   return (
-    <motion.g
-      animate={
-        isPressed && isTarget
-          ? { y: depth }
-          : isTarget
-          ? { y: [0, -3, 0] }
-          : { y: 0 }
-      }
-      transition={
-        isTarget && !isPressed
-          ? { repeat: Infinity, duration: 1.8, ease: "easeInOut" }
-          : { duration: 0.1 }
-      }
+    <g
+      style={{
+        transform: `translateY(${yOffset}px)`,
+        transition: "transform 0.1s",
+      }}
     >
       {/* Target key: pulsing radial glow behind the key */}
       {isTarget && (
@@ -146,6 +140,17 @@ function KeyCap({
         />
       )}
 
+      {/* Target key bob animation */}
+      {isTarget && !isPressed && (
+        <animateTransform
+          attributeName="transform"
+          type="translate"
+          values="0,0;0,-3;0,0"
+          dur="1.8s"
+          repeatCount="indefinite"
+        />
+      )}
+
       {/* Key label */}
       <text
         x={keyData.x + keyData.width / 2}
@@ -164,7 +169,7 @@ function KeyCap({
       >
         {keyData.label}
       </text>
-    </motion.g>
+    </g>
   );
 }
 

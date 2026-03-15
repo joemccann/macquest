@@ -1,5 +1,6 @@
 import type { SaveState } from "./save-state";
-import { getSpellingWord, SPELLING_WORDS } from "./words";
+
+const TOTAL_SPELLING_WORDS = 100;
 
 export type GamePhase = "welcome" | "playing" | "celebrating" | "level-complete" | "victory" | "spelling-intro";
 
@@ -32,9 +33,9 @@ export type GameAction =
   | { type: "SET_CELEBRATION_MESSAGE"; message: string }
   | { type: "FINISH_CELEBRATION" }
   | { type: "NEXT_LEVEL" }
-  | { type: "RESUME_GAME"; save: SaveState }
-  | { type: "START_SPELLING" }
-  | { type: "NEXT_WORD" }
+  | { type: "RESUME_GAME"; save: SaveState; word?: string }
+  | { type: "START_SPELLING"; word: string }
+  | { type: "NEXT_WORD"; word: string; done: boolean }
   | { type: "RETURN_HOME" };
 
 // All keyboard keys for the final challenge level
@@ -50,63 +51,31 @@ function generateLevel12(): string[] {
   return shuffled.slice(0, 14);
 }
 
-export const LEVELS: string[][] = [
-  // Level 1: Magic Buttons
-  ["F", "J", "F", "J", "J", "F", "F", "J"],
-  // Level 2: Home Row Fingers
-  ["D", "K", "F", "J", "D", "K", "S", "L", "F", "J"],
-  // Level 3: Full Home Row
-  ["A", "S", "D", "F", "G", "H", "J", "K", "L", ";"],
-  // Level 4: Home Row Master
-  ["F", "J", "D", "K", "S", "L", "A", ";", "G", "H", "F", "J"],
-  // Level 5: Top Row Left
-  ["Q", "W", "E", "R", "T", "F", "J", "Q", "W", "E", "R", "T"],
-  // Level 6: Top Row Right
-  ["Y", "U", "I", "O", "P", "F", "J", "Y", "U", "I", "O", "P"],
-  // Level 7: Top Row Master
-  ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
-  // Level 8: Bottom Row Left
-  ["Z", "X", "C", "V", "B", "F", "J", "Z", "X", "C", "V", "B"],
-  // Level 9: Bottom Row Right
-  ["N", "M", ",", ".", "/", "F", "J", "N", "M", ",", ".", "/"],
-  // Level 10: Bottom Row Master
-  ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "/"],
-  // Level 11: Number Row
-  ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
-  // Level 12: Full Keyboard Challenge (generated randomly)
+// Levels stored as compact strings, split into char arrays at init.
+// Level 12 is generated randomly.
+const LEVELS: string[][] = [
+  ..."FJFJJFFJ|DKFJDKSLFJ|ASDFGHJKL;|FJDKSLA;GHFJ|QWERTFJQWERT|YUIOPFJYUIOP|QWERTYUIOP|ZXCVBFJZXCVB|NM,./FJNM,./|ZXCVBNM,./|1234567890"
+    .split("|")
+    .map((s) => s.split("")),
   generateLevel12(),
 ];
 
-export const LEVEL_NAMES = [
-  "Magic Buttons",
-  "Home Row Fingers",
-  "Full Home Row",
-  "Home Row Master",
-  "Top Row Left",
-  "Top Row Right",
-  "Top Row Master",
-  "Bottom Row Left",
-  "Bottom Row Right",
-  "Bottom Row Master",
-  "Number Row",
-  "Full Keyboard Challenge",
-];
+export const LEVEL_NAMES = "Magic Buttons|Home Row Fingers|Full Home Row|Home Row Master|Top Row Left|Top Row Right|Top Row Master|Bottom Row Left|Bottom Row Right|Bottom Row Master|Number Row|Full Keyboard Challenge".split("|");
 
 function wordToLetters(word: string): string[] {
   return word.toUpperCase().split("");
 }
 
 export function getInitialState(): GameState {
-  const letters = LEVELS[0];
   return {
     phase: "welcome",
     mode: "keys",
     currentLevel: 0,
     currentLetterIndex: 0,
-    targetLetter: letters[0],
-    letters,
+    targetLetter: "",
+    letters: [],
     score: 0,
-    totalLetters: letters.length,
+    totalLetters: 0,
     celebrationMessage: "",
     wrongKey: false,
     wrongKeyMessage: "",
@@ -147,7 +116,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const { save } = action;
 
       if (save.mode === "spelling") {
-        const word = getSpellingWord(save.spellingWordIndex);
+        const word = action.word || "";
         const letters = wordToLetters(word);
         const letterIndex = Math.min(save.currentLetterIndex, letters.length - 1);
         return {
@@ -197,7 +166,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case "START_SPELLING": {
-      const word = getSpellingWord(0);
+      const word = action.word;
       const letters = wordToLetters(word);
       return {
         ...state,
@@ -312,15 +281,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case "NEXT_WORD": {
-      const nextWordIndex = state.spellingWordIndex + 1;
-      if (nextWordIndex >= SPELLING_WORDS.length) {
+      if (action.done) {
         return {
           ...state,
           phase: "victory",
         };
       }
 
-      const word = getSpellingWord(nextWordIndex);
+      const nextWordIndex = state.spellingWordIndex + 1;
+      const word = action.word;
       const letters = wordToLetters(word);
       return {
         ...state,
