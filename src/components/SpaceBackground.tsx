@@ -15,7 +15,7 @@ interface Star {
   opacity: number;
 }
 
-const STARS: Star[] = Array.from({ length: 40 }, (_, i) => ({
+const STARS: Star[] = Array.from({ length: 25 }, (_, i) => ({
   x: Math.round(sr(i * 6 + 1) * 100),
   y: Math.round(sr(i * 6 + 2) * 100),
   size: Math.round(sr(i * 6 + 3) * 25 + 5) / 10,
