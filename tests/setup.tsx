@@ -17,35 +17,9 @@ Object.defineProperty(HTMLMediaElement.prototype, "pause", {
   writable: true,
 });
 
-// Mock framer-motion to avoid animation issues in tests
-vi.mock("framer-motion", async () => {
-  const actual = await vi.importActual<typeof import("framer-motion")>("framer-motion");
-  return {
-    ...actual,
-    AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
-    motion: new Proxy(actual.motion, {
-      get: (target, prop: string) => {
-        if (typeof prop === "string" && !prop.startsWith("_")) {
-          // Return a simple component that renders the HTML element
-          const Component = (props: Record<string, unknown>) => {
-            const {
-              animate: _animate,
-              initial: _initial,
-              exit: _exit,
-              transition: _transition,
-              whileHover: _whileHover,
-              whileTap: _whileTap,
-              variants: _variants,
-              ...rest
-            } = props;
-            const Tag = prop as keyof React.JSX.IntrinsicElements;
-            return <Tag {...rest} />;
-          };
-          Component.displayName = `motion.${prop}`;
-          return Component;
-        }
-        return Reflect.get(target, prop);
-      },
-    }),
-  };
-});
+// Mock server actions
+vi.mock("@/app/actions/generate-phrase", () => ({
+  generatePhrase: vi.fn(() =>
+    Promise.resolve({ text: "Great job!", audioFile: "/audio/positive/00.mp3" })
+  ),
+}));
