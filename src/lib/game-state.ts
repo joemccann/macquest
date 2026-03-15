@@ -67,16 +67,15 @@ function wordToLetters(word: string): string[] {
 }
 
 export function getInitialState(): GameState {
-  const letters = LEVELS[0];
   return {
     phase: "welcome",
     mode: "keys",
     currentLevel: 0,
     currentLetterIndex: 0,
-    targetLetter: letters[0],
-    letters,
+    targetLetter: "",
+    letters: [],
     score: 0,
-    totalLetters: letters.length,
+    totalLetters: 0,
     celebrationMessage: "",
     wrongKey: false,
     wrongKeyMessage: "",
